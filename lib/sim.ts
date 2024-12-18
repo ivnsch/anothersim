@@ -4,7 +4,6 @@ import { xAxisVerticesNew, yAxisVertices, zAxisVerticesNew } from "./axis_mesh";
 import { Camera } from "./camera";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants";
 import my_shader from "./shaders/screen_shader.wgsl";
-import { TriangleEntity } from "./triangle_entity";
 import { CubeEntity } from "./cube_entity";
 import { Axis } from "./axis";
 import { Entity } from "./entity";
@@ -25,8 +24,6 @@ export class Sim {
   camera: Camera;
 
   entities: Entity[] = [];
-  // separate to set eulers via keyboard
-  triangle: TriangleEntity | null = null;
 
   identityBuffer: GPUBuffer | null = null;
   identity: mat4;
@@ -58,7 +55,6 @@ export class Sim {
     this.adapter = adapter;
     this.device = device;
 
-    const triangle = new TriangleEntity(this.device);
     const cube = new CubeEntity(this.device);
     const xAxisLines = new AxisLines(
       device,
@@ -74,7 +70,7 @@ export class Sim {
     );
     const yAxis = new Axis(device, yAxisVertices());
 
-    this.entities = [yAxis, xAxisLines, zAxisLines, triangle, cube];
+    this.entities = [yAxis, xAxisLines, zAxisLines, cube];
 
     this.context.configure({
       device: device,
@@ -88,9 +84,8 @@ export class Sim {
 
     xAxisLines.initMeshType(device, 0);
     yAxis.initMeshType(device, 1);
-    triangle.initMeshType(device, 3);
-    cube.initMeshType(device, 4);
-    zAxisLines.initMeshType(device, 5);
+    cube.initMeshType(device, 3);
+    zAxisLines.initMeshType(device, 4);
 
     this.identityBuffer = device.createBuffer({
       label: "identity buffer",
@@ -105,25 +100,10 @@ export class Sim {
     // the approach itself feels slightly weird, but it works..
     // also ideally it should be initialized in the respective entities? but too many dependencies..
 
-    triangle.bindGroup = createBindGroup(
-      "triangle (new) bind group",
-      this.device,
-      bindGroupLayout,
-      triangle.transformBuffer,
-      cube.transformBuffer,
-      this.projectionBuffer,
-      this.camera.buffer,
-      triangle.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
-    );
-
     cube.bindGroup = createBindGroup(
       "cube bind group",
       this.device,
       bindGroupLayout,
-      triangle.transformBuffer,
       cube.transformBuffer,
       this.projectionBuffer,
       this.camera.buffer,
@@ -137,7 +117,6 @@ export class Sim {
       "x axis bind group (new)",
       this.device,
       bindGroupLayout,
-      triangle.transformBuffer,
       cube.transformBuffer,
       this.projectionBuffer,
       this.camera.buffer,
@@ -151,7 +130,6 @@ export class Sim {
       "y axis bind group",
       this.device,
       bindGroupLayout,
-      triangle.transformBuffer,
       cube.transformBuffer,
       this.projectionBuffer,
       this.camera.buffer,
@@ -165,7 +143,6 @@ export class Sim {
       "z axis bind group (new)",
       this.device,
       bindGroupLayout,
-      triangle.transformBuffer,
       cube.transformBuffer,
       this.projectionBuffer,
       this.camera.buffer,
@@ -181,7 +158,7 @@ export class Sim {
       my_shader,
       device,
       this.presentationFormat,
-      triangle.bufferLayout,
+      cube.bufferLayout,
       bindGroupLayout,
       this.depthStencilResources.depthStencilState
     );
@@ -235,10 +212,6 @@ export class Sim {
       this.identityBuffer,
       this.identity
     );
-  };
-
-  setTriangleEulers = (pitch: number, yaw: number, roll: number) => {
-    this.triangle?.setEulers(pitch, yaw, roll);
   };
 
   setCameraEulers = (pitch: number, yaw: number, roll: number) => {
@@ -316,7 +289,6 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
-      { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };
@@ -325,7 +297,6 @@ const createBindGroup = (
   label: string,
   device: GPUDevice,
   bindGroupLayout: GPUBindGroupLayout,
-  triangleRotBuffer: GPUBuffer,
   cubeRotBuffer: GPUBuffer,
   projectionBuffer: GPUBuffer,
   cameraBuffer: GPUBuffer,
@@ -340,12 +311,11 @@ const createBindGroup = (
     entries: [
       { binding: 0, resource: { buffer: projectionBuffer } },
       { binding: 1, resource: { buffer: cameraBuffer } },
-      { binding: 2, resource: { buffer: triangleRotBuffer } },
-      { binding: 3, resource: { buffer: cubeRotBuffer } },
-      { binding: 4, resource: { buffer: meshTypeBuffer } },
-      { binding: 5, resource: { buffer: xAxisLines.instancesBuffer } },
-      { binding: 6, resource: { buffer: zAxisLines.instancesBuffer } },
-      { binding: 7, resource: { buffer: identityBuffer } },
+      { binding: 2, resource: { buffer: cubeRotBuffer } },
+      { binding: 3, resource: { buffer: meshTypeBuffer } },
+      { binding: 4, resource: { buffer: xAxisLines.instancesBuffer } },
+      { binding: 5, resource: { buffer: zAxisLines.instancesBuffer } },
+      { binding: 6, resource: { buffer: identityBuffer } },
     ],
   });
 };
@@ -354,7 +324,7 @@ const createPipeline = (
   shader: string,
   device: GPUDevice,
   presentationFormat: GPUTextureFormat,
-  triangleBuffer: GPUVertexBufferLayout,
+  cubeBuffer: GPUVertexBufferLayout,
   bindGroupLayout: GPUBindGroupLayout,
   depthStencilState: GPUDepthStencilState
 ): GPURenderPipeline => {
@@ -368,7 +338,7 @@ const createPipeline = (
     vertex: {
       module: device.createShaderModule({ code: shader }),
       entryPoint: "vs_main",
-      buffers: [triangleBuffer],
+      buffers: [cubeBuffer],
     },
     fragment: {
       module: device.createShaderModule({ code: shader }),

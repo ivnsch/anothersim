@@ -69,7 +69,6 @@ export class App {
       this.cameraPos[2] += deltaCameraTrans;
     }
 
-    this.sim.setTriangleEulers(this.objPitch, this.objYaw, this.objRoll);
     this.sim.setCameraEulers(this.cameraPitch, this.cameraYaw, this.cameraRoll);
     this.sim.setCameraTranslation(this.cameraPos);
   }
