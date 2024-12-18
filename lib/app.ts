@@ -2,7 +2,7 @@ import { vec3 } from "gl-matrix";
 import { Sim, origin } from "./sim";
 
 export class App {
-  renderer: Sim;
+  sim: Sim;
 
   objPitch: number = 0;
   objYaw: number = 0;
@@ -17,7 +17,7 @@ export class App {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
-    this.renderer = new Sim(canvas, this.cameraPos);
+    this.sim = new Sim(canvas, this.cameraPos);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);
@@ -25,7 +25,7 @@ export class App {
   }
 
   async init(navigator: Navigator) {
-    await this.renderer.init(navigator);
+    await this.sim.init(navigator);
   }
 
   handleKeypress(event: any) {
@@ -69,17 +69,13 @@ export class App {
       this.cameraPos[2] += deltaCameraTrans;
     }
 
-    this.renderer.setTriangleEulers(this.objPitch, this.objYaw, this.objRoll);
-    this.renderer.setCameraEulers(
-      this.cameraPitch,
-      this.cameraYaw,
-      this.cameraRoll
-    );
-    this.renderer.setCameraTranslation(this.cameraPos);
+    this.sim.setTriangleEulers(this.objPitch, this.objYaw, this.objRoll);
+    this.sim.setCameraEulers(this.cameraPitch, this.cameraYaw, this.cameraRoll);
+    this.sim.setCameraTranslation(this.cameraPos);
   }
 
   run = () => {
-    this.renderer.render();
+    this.sim.render();
 
     requestAnimationFrame(this.run);
   };
