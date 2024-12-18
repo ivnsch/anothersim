@@ -10,7 +10,7 @@ struct OurVertexShaderOutput {
 @binding(4) @group(0) var<uniform> x_axes_transforms: array<mat4x4f, 20>;
 @binding(5) @group(0) var<uniform> z_axes_transforms_new: array<mat4x4f, 20>;
 @binding(6) @group(0) var<uniform> identity: mat4x4f; // for debugging sometimes..
-@binding(7) @group(0) var<uniform> cube_transforms: array<mat4x4f, 20>;
+@binding(7) @group(0) var<uniform> cube_transforms: array<mat4x4f, 100>;
 
 @vertex
 fn vs_main(

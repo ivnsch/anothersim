@@ -9,7 +9,7 @@ export class CubeInstances extends Entity {
   private velocity: vec3 = vec3.fromValues(0, 0, 0);
 
   instancesBuffer: GPUBuffer;
-  numInstances = 20; // remember to set this in *_axes_transforms in the shader too
+  numInstances = 100; // remember to set this in *_axes_transforms in the shader too
   matrixFloatCount = 16; // 4x4 matrix
   matrixSize = 4 * this.matrixFloatCount;
   private matrices: mat4[] = [];
