@@ -12,7 +12,7 @@ export default function Home() {
       if (canvasRef.current) {
         const app = new App(document, canvasRef.current);
         await app.init(navigator);
-        app.run();
+        app.run(performance.now());
       }
     };
     nested();
