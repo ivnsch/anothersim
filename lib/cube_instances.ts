@@ -30,6 +30,13 @@ export class CubeInstances extends Entity {
     for (let i = 0; i < this.numInstances; i++) {
       const m = mat4.create();
       mat4.identity(m);
+      const randomX = Math.random() * 6 - 3;
+      const randomZ = Math.random() * 6 - 3;
+      const v = vec3.fromValues(randomX, 0, randomZ);
+      mat4.translate(m, m, v);
+      const scale = 0.1;
+      const scaleV = vec3.fromValues(scale, scale, scale);
+      mat4.scale(m, m, scaleV);
       this.matrices.push(m);
     }
     this.updateInstanceMatrices();
