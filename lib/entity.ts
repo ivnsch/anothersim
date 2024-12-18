@@ -8,7 +8,7 @@ import {
   createIdentityMatrix,
   createMatrixUniformBuffer,
   createMeshTypeUniformBuffer,
-} from "./web_gpu";
+} from "./sim";
 import { setObjPitch, setObjRoll, setObjYaw, trans } from "./matrix_3x3";
 
 export class Entity {

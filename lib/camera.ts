@@ -1,5 +1,5 @@
 import { vec3, mat4 } from "gl-matrix";
-import { createMatrixUniformBuffer } from "./web_gpu";
+import { createMatrixUniformBuffer } from "./sim";
 
 export class Camera {
   position: vec3;

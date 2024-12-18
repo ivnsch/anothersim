@@ -1,5 +1,5 @@
 import { vec3 } from "gl-matrix";
-import { Sim, origin } from "./web_gpu";
+import { Sim, origin } from "./sim";
 
 export class App {
   renderer: Sim;
