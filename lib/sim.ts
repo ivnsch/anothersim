@@ -56,7 +56,6 @@ export class Sim {
     this.adapter = adapter;
     this.device = device;
 
-    const cube = new CubeEntity(this.device);
     const cubeInstances = new CubeInstances(this.device);
     const xAxisLines = new AxisLines(
       device,
@@ -72,7 +71,7 @@ export class Sim {
     );
     const yAxis = new Axis(device, yAxisVertices());
 
-    this.entities = [yAxis, xAxisLines, zAxisLines, cube, cubeInstances];
+    this.entities = [yAxis, xAxisLines, zAxisLines, cubeInstances];
 
     this.context.configure({
       device: device,
@@ -86,9 +85,8 @@ export class Sim {
 
     xAxisLines.initMeshType(device, 0);
     yAxis.initMeshType(device, 1);
-    cube.initMeshType(device, 2);
-    zAxisLines.initMeshType(device, 3);
-    cubeInstances.initMeshType(device, 4);
+    zAxisLines.initMeshType(device, 2);
+    cubeInstances.initMeshType(device, 3);
 
     this.identityBuffer = device.createBuffer({
       label: "identity buffer",
@@ -103,25 +101,10 @@ export class Sim {
     // the approach itself feels slightly weird, but it works..
     // also ideally it should be initialized in the respective entities? but too many dependencies..
 
-    cube.bindGroup = createBindGroup(
-      "cube bind group",
-      this.device,
-      bindGroupLayout,
-      cube.transformBuffer,
-      cubeInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      cube.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
-    );
-
     cubeInstances.bindGroup = createBindGroup(
       "cube instances bind group",
       this.device,
       bindGroupLayout,
-      cube.transformBuffer,
       cubeInstances,
       this.projectionBuffer,
       this.camera.buffer,
@@ -135,7 +118,6 @@ export class Sim {
       "x axis bind group (new)",
       this.device,
       bindGroupLayout,
-      cube.transformBuffer,
       cubeInstances,
       this.projectionBuffer,
       this.camera.buffer,
@@ -149,7 +131,6 @@ export class Sim {
       "y axis bind group",
       this.device,
       bindGroupLayout,
-      cube.transformBuffer,
       cubeInstances,
       this.projectionBuffer,
       this.camera.buffer,
@@ -163,7 +144,6 @@ export class Sim {
       "z axis bind group (new)",
       this.device,
       bindGroupLayout,
-      cube.transformBuffer,
       cubeInstances,
       this.projectionBuffer,
       this.camera.buffer,
@@ -179,7 +159,7 @@ export class Sim {
       my_shader,
       device,
       this.presentationFormat,
-      cube.bufferLayout,
+      cubeInstances.bufferLayout,
       bindGroupLayout,
       this.depthStencilResources.depthStencilState
     );
@@ -310,7 +290,6 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
-      { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };
@@ -319,7 +298,6 @@ const createBindGroup = (
   label: string,
   device: GPUDevice,
   bindGroupLayout: GPUBindGroupLayout,
-  cubeRotBuffer: GPUBuffer,
   cubeInstances: CubeInstances,
   projectionBuffer: GPUBuffer,
   cameraBuffer: GPUBuffer,
@@ -334,12 +312,11 @@ const createBindGroup = (
     entries: [
       { binding: 0, resource: { buffer: projectionBuffer } },
       { binding: 1, resource: { buffer: cameraBuffer } },
-      { binding: 2, resource: { buffer: cubeRotBuffer } },
-      { binding: 3, resource: { buffer: meshTypeBuffer } },
-      { binding: 4, resource: { buffer: xAxisLines.instancesBuffer } },
-      { binding: 5, resource: { buffer: zAxisLines.instancesBuffer } },
-      { binding: 6, resource: { buffer: identityBuffer } },
-      { binding: 7, resource: { buffer: cubeInstances.instancesBuffer } },
+      { binding: 2, resource: { buffer: meshTypeBuffer } },
+      { binding: 3, resource: { buffer: xAxisLines.instancesBuffer } },
+      { binding: 4, resource: { buffer: zAxisLines.instancesBuffer } },
+      { binding: 5, resource: { buffer: identityBuffer } },
+      { binding: 6, resource: { buffer: cubeInstances.instancesBuffer } },
     ],
   });
 };

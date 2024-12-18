@@ -5,12 +5,11 @@ struct OurVertexShaderOutput {
 
 @binding(0) @group(0) var<uniform> projection: mat4x4<f32>;
 @binding(1) @group(0) var<uniform> camera: mat4x4<f32>;
-@binding(2) @group(0) var<uniform> rotation_cube: mat4x4<f32>;
-@binding(3) @group(0) var<uniform> meshType: u32;
-@binding(4) @group(0) var<uniform> x_axes_transforms: array<mat4x4f, 20>;
-@binding(5) @group(0) var<uniform> z_axes_transforms_new: array<mat4x4f, 20>;
-@binding(6) @group(0) var<uniform> identity: mat4x4f; // for debugging sometimes..
-@binding(7) @group(0) var<uniform> cube_transforms: array<mat4x4f, 100>;
+@binding(2) @group(0) var<uniform> meshType: u32;
+@binding(3) @group(0) var<uniform> x_axes_transforms: array<mat4x4f, 20>;
+@binding(4) @group(0) var<uniform> z_axes_transforms_new: array<mat4x4f, 20>;
+@binding(5) @group(0) var<uniform> identity: mat4x4f; // for debugging sometimes..
+@binding(6) @group(0) var<uniform> cube_transforms: array<mat4x4f, 100>;
 
 @vertex
 fn vs_main(
@@ -32,13 +31,10 @@ fn vs_main(
     } else if (meshType == 1) { // y axis
         transformed = vertex_4;
         output.color = vec3<f32>(0.0, 1.0, 0.0); // green
-    } else if (meshType == 2) { // cube
-        output.color = vec3<f32>(1.0, 1.0, 0.0); // yellow
-        transformed = rotation_cube * vertex_4;
-    } else if (meshType == 3) { // z axis new
+    } else if (meshType == 2) { // z axis new
         transformed = z_axes_transforms_new[instance_idx] * vertex_4;
         output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
-    } else if (meshType == 4) { // cube instances
+    } else if (meshType == 3) { // cube instances
         transformed = cube_transforms[instance_idx] * vertex_4;
         output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
     }else { // unexpected
