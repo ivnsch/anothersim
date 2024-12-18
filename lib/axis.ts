@@ -11,7 +11,7 @@ export class Axis extends Entity {
     super(device, vertices)
   }
 
-  render = (device: GPUDevice, pass: GPURenderPassEncoder) => {
+  render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
     pass.draw(6, 1);

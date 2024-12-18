@@ -74,9 +74,9 @@ export class App {
     this.sim.setCameraTranslation(this.cameraPos);
   }
 
-  run = () => {
-    this.sim.render();
+  run = (time: number) => {
+    this.sim.render(time);
 
-    requestAnimationFrame(this.run);
+    requestAnimationFrame((time) => this.run(time));
   };
 }

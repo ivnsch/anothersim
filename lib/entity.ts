@@ -20,7 +20,7 @@ export class Entity {
   bindGroup: GPUBindGroup | null = null;
 
   transformBuffer: GPUBuffer;
-  transformMatrix: mat4 | null = createIdentityMatrix();
+  transformMatrix: mat4 = createIdentityMatrix();
 
   meshTypeBuffer: GPUBuffer | null = null;
 
@@ -42,7 +42,7 @@ export class Entity {
     this.meshTypeBuffer.unmap();
   };
 
-  render = (device: GPUDevice, pass: GPURenderPassEncoder) => {
+  render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
     pass.draw(3, 1);
@@ -100,5 +100,9 @@ export class Entity {
     // this.rotMatrix = rotations;
     this.transformMatrix = transposed;
     // this.cubeEulersMatrix = transposed;
+  };
+
+  setPosition = (pos: vec3) => {
+    mat4.translate(this.transformMatrix, this.transformMatrix, pos);
   };
 }

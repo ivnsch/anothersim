@@ -201,7 +201,7 @@ export class Sim {
     this.renderPassDescriptor = descriptor;
   };
 
-  render = () => {
+  render = (time: number) => {
     if (!this.depthStencilResources) {
       return;
     }
@@ -224,6 +224,7 @@ export class Sim {
     }
 
     render(
+      time,
       this.device,
       this.renderPassDescriptor,
       this.pipeline,
@@ -252,6 +253,7 @@ export class Sim {
 }
 
 const render = (
+  time: number,
   device: GPUDevice,
   renderPassDescriptor: GPURenderPassDescriptor,
   pipeline: GPURenderPipeline,
@@ -272,7 +274,7 @@ const render = (
   pass.setPipeline(pipeline);
 
   entities.forEach((entity) => {
-    entity.render(device, pass);
+    entity.render(device, pass, time);
   });
 
   pass.end();

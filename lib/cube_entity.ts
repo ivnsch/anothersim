@@ -11,7 +11,7 @@ export class CubeEntity extends Entity {
     super(device, vertices(-4))
   }
 
-  render = (device: GPUDevice, pass: GPURenderPassEncoder) => {
+  render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
     pass.draw(36, 1);
