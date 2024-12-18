@@ -1,8 +1,8 @@
 import { vec3 } from "gl-matrix";
-import { WebGpu, origin } from "./web_gpu";
+import { Sim, origin } from "./web_gpu";
 
 export class App {
-  renderer: WebGpu;
+  renderer: Sim;
 
   objPitch: number = 0;
   objYaw: number = 0;
@@ -17,7 +17,7 @@ export class App {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
-    this.renderer = new WebGpu(canvas, this.cameraPos);
+    this.renderer = new Sim(canvas, this.cameraPos);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);

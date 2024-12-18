@@ -9,7 +9,7 @@ import { CubeEntity } from "./cube_entity";
 import { Axis } from "./axis";
 import { Entity } from "./entity";
 
-export class WebGpu {
+export class Sim {
   adapter: GPUAdapter | null = null;
   device: GPUDevice | null = null;
   context: GPUCanvasContext;
