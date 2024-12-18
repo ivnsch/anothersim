@@ -20,6 +20,7 @@ export class Entity {
   bindGroup: GPUBindGroup | null = null;
 
   transformBuffer: GPUBuffer;
+  // TODO shouldn't be here given e.g. CubeInstances having one per instance
   transformMatrix: mat4 = createIdentityMatrix();
 
   meshTypeBuffer: GPUBuffer | null = null;

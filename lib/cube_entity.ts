@@ -5,8 +5,6 @@ import { prettyPrintMat4 } from "./matrix_3x3";
 // for now inheritance, may change
 // these functions should be generic for all drawables anyway
 export class CubeEntity extends Entity {
-  private static z = -2;
-
   private lastTime: number = 0;
   private velocity: vec3 = vec3.fromValues(0, 0, 0);
 
@@ -50,7 +48,7 @@ export class CubeEntity extends Entity {
   };
 }
 
-const vertices = (z: number) => {
+export const vertices = (z: number) => {
   const cubeSide = 2;
   // x y z
   // prettier-ignore
