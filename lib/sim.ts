@@ -84,8 +84,8 @@ export class Sim {
 
     xAxisLines.initMeshType(device, 0);
     yAxis.initMeshType(device, 1);
-    cube.initMeshType(device, 3);
-    zAxisLines.initMeshType(device, 4);
+    cube.initMeshType(device, 2);
+    zAxisLines.initMeshType(device, 3);
 
     this.identityBuffer = device.createBuffer({
       label: "identity buffer",

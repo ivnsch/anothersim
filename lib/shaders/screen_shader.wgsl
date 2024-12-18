@@ -31,10 +31,10 @@ fn vs_main(
     } else if (meshType == 1) { // y axis
         transformed = vertex_4;
         output.color = vec3<f32>(0.0, 1.0, 0.0); // green
-    } else if (meshType == 3) { // cube
+    } else if (meshType == 2) { // cube
         output.color = vec3<f32>(1.0, 1.0, 0.0); // yellow
         transformed = rotation_cube * vertex_4;
-    } else if (meshType == 4) { // z axis new
+    } else if (meshType == 3) { // z axis new
         transformed = z_axes_transforms_new[instance_idx] * vertex_4;
         output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
     } else { // unexpected
