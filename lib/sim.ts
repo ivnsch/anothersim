@@ -127,34 +127,13 @@ export class Sim {
       yAxis: yAxis,
     };
 
-    cubeInstances.bindGroup = createBindGroupWithDeps(
+    cubeInstances.initBindGroup(bindGroupDeps, "cube instances bind group");
+    xAxisLines.initBindGroup(bindGroupDeps, "x axis bind group (new)");
+    yAxis.initBindGroup(bindGroupDeps, "y axis bind group");
+    zAxisLines.initBindGroup(bindGroupDeps, "z axis bind group (new)");
+    cubeDensityInstances.initBindGroup(
       bindGroupDeps,
-      "cube instances bind group",
-      cubeInstances.meshTypeBuffer!
-    );
-
-    xAxisLines.bindGroup = createBindGroupWithDeps(
-      bindGroupDeps,
-      "x axis bind group (new)",
-      xAxisLines.meshTypeBuffer!
-    );
-
-    yAxis.bindGroup = createBindGroupWithDeps(
-      bindGroupDeps,
-      "y axis bind group",
-      yAxis.meshTypeBuffer!
-    );
-
-    zAxisLines.bindGroup = createBindGroupWithDeps(
-      bindGroupDeps,
-      "z axis bind group (new)",
-      zAxisLines.meshTypeBuffer!
-    );
-
-    cubeDensityInstances.bindGroup = createBindGroupWithDeps(
-      bindGroupDeps,
-      "cube density instances bind group",
-      cubeDensityInstances.meshTypeBuffer!
+      "cube density instances bind group"
     );
 
     this.depthStencilResources = makeDepthBufferResources(device);
@@ -301,7 +280,7 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
   });
 };
 
-type BindGroupDeps = {
+export type BindGroupDeps = {
   device: GPUDevice;
   bindGroupLayout: GPUBindGroupLayout;
   yAxis: Axis;
@@ -334,7 +313,7 @@ const createBindGroupWithDeps = (
   );
 };
 
-const createBindGroup = (
+export const createBindGroup = (
   label: string,
   device: GPUDevice,
   bindGroupLayout: GPUBindGroupLayout,

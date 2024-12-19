@@ -5,6 +5,8 @@ import {
   setDefaultVerticesInBuffer,
 } from "./mesh";
 import {
+  BindGroupDeps,
+  createBindGroup,
   createIdentityMatrix,
   createMatrixUniformBuffer,
   createMeshTypeUniformBuffer,
@@ -53,6 +55,23 @@ export class Entity {
       0,
       <ArrayBuffer>this.transformMatrix
     );
+  };
+
+  initBindGroup = (deps: BindGroupDeps, label: string) => {
+    const bindGroup = createBindGroup(
+      label,
+      deps.device,
+      deps.bindGroupLayout,
+      deps.cubeInstances,
+      deps.cubeDensityInstances,
+      deps.projectionBuffer,
+      deps.cameraBuffer,
+      this.meshTypeBuffer!,
+      deps.xAxisLines,
+      deps.zAxisLines,
+      deps.identityBuffer
+    );
+    this.bindGroup = bindGroup;
   };
 
   center = (): vec3 => {
