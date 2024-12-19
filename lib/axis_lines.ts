@@ -17,9 +17,10 @@ export class AxisLines extends Entity {
     device: GPUDevice,
     instancesBufferLabel: string,
     vertices: number[],
+    meshTypeId: number,
     matrixCreator: (coord: number) => mat4
   ) {
-    super(device, vertices);
+    super(device, vertices, meshTypeId);
 
     this.initInstancesMatrices(matrixCreator);
     this.instancesBuffer = this.createInstancesBuffer(

@@ -25,10 +25,12 @@ export class Entity {
   // TODO shouldn't be here given e.g. CubeInstances having one per instance
   transformMatrix: mat4 = createIdentityMatrix();
 
-  meshTypeBuffer: GPUBuffer | null = null;
+  meshTypeBuffer: GPUBuffer;
 
-  constructor(device: GPUDevice, vertices: number[]) {
+  constructor(device: GPUDevice, vertices: number[], meshTypeId: number) {
     this.vertices = new Float32Array(vertices);
+
+    this.meshTypeBuffer = createMeshTypeBuffer(device, meshTypeId);
 
     this.buffer = createDefaultBuffer("triangle mesh", device, this.vertices);
     setDefaultVerticesInBuffer(this.buffer, this.vertices);
@@ -126,3 +128,10 @@ export class Entity {
     mat4.translate(this.transformMatrix, this.transformMatrix, pos);
   };
 }
+
+const createMeshTypeBuffer = (device: GPUDevice, id: number): GPUBuffer => {
+  const meshTypeBuffer = createMeshTypeUniformBuffer(device);
+  new Uint32Array(meshTypeBuffer.getMappedRange()).set([id]);
+  meshTypeBuffer.unmap();
+  return meshTypeBuffer;
+};

@@ -25,10 +25,10 @@ export class CubeInstances extends Entity {
     this.colorVectorFloatCount * CubeInstances.numInstances
   );
 
-  constructor(device: GPUDevice, positions: vec3[]) {
+  constructor(device: GPUDevice, positions: vec3[], meshTypeId: number) {
     // x y z
     // prettier-ignore
-    super(device, vertices(-4))
+    super(device, vertices(-4), meshTypeId)
 
     this.initPositions = positions;
 

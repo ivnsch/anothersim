@@ -5,10 +5,10 @@ import { Entity } from "./entity";
 export class Axis extends Entity {
   private static z = -2;
 
-  constructor(device: GPUDevice, vertices: number[]) {
+  constructor(device: GPUDevice, vertices: number[], meshTypeId: number) {
     // x y z
     // prettier-ignore
-    super(device, vertices)
+    super(device, vertices, meshTypeId)
   }
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {

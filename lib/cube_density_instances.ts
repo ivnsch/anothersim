@@ -27,10 +27,10 @@ export class CubeDensityInstances extends Entity {
     this.colorVectorFloatCount * this.numInstances
   );
 
-  constructor(device: GPUDevice, cubePositions: vec3[]) {
+  constructor(device: GPUDevice, cubePositions: vec3[], meshTypeId: number) {
     // x y z
     // prettier-ignore
-    super(device, vertices(-4))
+    super(device, vertices(-4), meshTypeId)
 
     this.cubePositions = cubePositions;
 

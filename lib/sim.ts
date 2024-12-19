@@ -56,26 +56,28 @@ export class Sim {
     this.adapter = adapter;
     this.device = device;
 
-    const cubePositions = generateInitCubePositions(CubeInstances.numInstances);
-    const cubeInstances = new CubeInstances(this.device, cubePositions);
-    const cubeDensityInstances = new CubeDensityInstances(
-      this.device,
-      cubePositions
-    );
-
     const xAxisLines = new AxisLines(
       device,
       "x axes instances buffer (new)",
       xAxisVerticesNew(),
+      0,
       createY0PlaneHorizontalLinesTranslationMatrix
     );
+    const yAxis = new Axis(device, yAxisVertices(), 1);
     const zAxisLines = new AxisLines(
       device,
       "z axes instances buffer (new)",
       zAxisVerticesNew(),
+      2,
       createY0PlaneVerticalLinesTranslationMatrix
     );
-    const yAxis = new Axis(device, yAxisVertices());
+    const cubePositions = generateInitCubePositions(CubeInstances.numInstances);
+    const cubeInstances = new CubeInstances(this.device, cubePositions, 3);
+    const cubeDensityInstances = new CubeDensityInstances(
+      this.device,
+      cubePositions,
+      4
+    );
 
     this.entities = [
       yAxis,
@@ -92,14 +94,6 @@ export class Sim {
 
     this.projectionBuffer = createMatrixUniformBuffer(device);
     this.camera.buffer = createMatrixUniformBuffer(device);
-
-    // types
-
-    xAxisLines.initMeshType(device, 0);
-    yAxis.initMeshType(device, 1);
-    zAxisLines.initMeshType(device, 2);
-    cubeInstances.initMeshType(device, 3);
-    cubeDensityInstances.initMeshType(device, 4);
 
     this.identityBuffer = device.createBuffer({
       label: "identity buffer",
