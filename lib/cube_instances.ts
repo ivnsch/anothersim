@@ -7,7 +7,7 @@ import { prettyPrintMat4 } from "./matrix_3x3";
 // these functions should be generic for all drawables anyway
 export class CubeInstances extends Entity {
   private lastTime: number = 0;
-  private velocity: vec3 = vec3.fromValues(0, 0, 0);
+  private velocities: vec3[] = [];
 
   instancesBuffer: GPUBuffer;
   numInstances = 100; // remember to set this in *_axes_transforms in the shader too
@@ -23,11 +23,11 @@ export class CubeInstances extends Entity {
     // prettier-ignore
     super(device, vertices(-4))
 
-    this.initInstancesMatrices();
+    this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
   }
 
-  private initInstancesMatrices = () => {
+  private initInstances = () => {
     for (let i = 0; i < this.numInstances; i++) {
       const m = mat4.create();
       mat4.identity(m);
@@ -44,6 +44,7 @@ export class CubeInstances extends Entity {
       mat4.scale(m, m, scaleV);
       // add transform matrix
       this.matrices.push(m);
+      this.velocities.push(vec3.create());
     }
     this.updateInstanceMatrices();
   };
@@ -95,17 +96,19 @@ export class CubeInstances extends Entity {
       return;
     }
 
-    // update velocity based on gravity
-    const velocityDelta = vec3.create();
-    const gravity = -0.0008;
-    vec3.scale(velocityDelta, vec3.fromValues(0, 1, 0), gravity * timeDelta);
-    vec3.add(this.velocity, this.velocity, velocityDelta);
+    this.matrices.forEach((matrix, index) => {
+      const velocity = this.velocities[index];
 
-    // update position based on velocity
-    const positionDelta = vec3.create();
-    vec3.scale(positionDelta, this.velocity, timeDelta);
+      // update velocity based on gravity
+      const velocityDelta = vec3.create();
+      const gravity = -0.0008;
+      vec3.scale(velocityDelta, vec3.fromValues(0, 1, 0), gravity * timeDelta);
+      vec3.add(velocity, velocity, velocityDelta);
 
-    this.matrices.forEach((matrix) => {
+      // update position based on velocity
+      const positionDelta = vec3.create();
+      vec3.scale(positionDelta, velocity, timeDelta);
+
       mat4.translate(matrix, matrix, positionDelta);
 
       const boundY = 2;
@@ -113,8 +116,8 @@ export class CubeInstances extends Entity {
       if (matrix[13] < -boundY) {
         matrix[13] = -boundY;
 
-        if (this.velocity[1] < 0) {
-          this.velocity[1] *= -1 * collisionDamping;
+        if (velocity[1] < 0) {
+          velocity[1] *= -1 * collisionDamping;
         }
       }
     });
