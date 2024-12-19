@@ -14,14 +14,16 @@ export class Camera {
   yaw: number = 0;
   roll: number = 0;
 
-  buffer: GPUBuffer | null = null;
+  buffer: GPUBuffer;
 
-  constructor(position: vec3) {
+  constructor(device: GPUDevice, position: vec3) {
     this.position = position;
 
     this.forwards = vec3.create();
     this.right = vec3.create();
     this.up = vec3.create();
+
+    this.buffer = createMatrixUniformBuffer(device);
   }
 
   update = () => {

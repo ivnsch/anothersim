@@ -21,36 +21,39 @@ export class Sim {
   renderPassDescriptor: GPURenderPassDescriptor | null = null;
 
   projection: Projection | null = null;
-
-  camera: Camera;
+  camera: Camera | null = null;
 
   entities: Entity[] = [];
 
   depthStencilResources: DepthBufferResources | null = null;
 
-  constructor(canvas: HTMLCanvasElement, cameraPos: vec3) {
+  constructor(canvas: HTMLCanvasElement) {
     this.presentationFormat = "bgra8unorm";
     this.context = <GPUCanvasContext>canvas.getContext("webgpu");
-
-    this.camera = new Camera(cameraPos);
   }
 
-  init = async (navigator: Navigator) => {
+  init = async (navigator: Navigator, cameraPos: vec3) => {
     const adapter = <GPUAdapter>await navigator.gpu?.requestAdapter();
     if (adapter) {
       const device = <GPUDevice>await adapter.requestDevice();
-      this.initInternal(adapter, device);
+      this.initInternal(adapter, device, cameraPos);
     } else {
       console.log("error: no adapter");
     }
   };
 
-  private initInternal = async (adapter: GPUAdapter, device: GPUDevice) => {
+  private initInternal = async (
+    adapter: GPUAdapter,
+    device: GPUDevice,
+    cameraPos: vec3
+  ) => {
     this.adapter = adapter;
     this.device = device;
 
     const projection = new Projection(device);
     this.projection = projection;
+    const camera = new Camera(device, cameraPos);
+    this.camera = camera;
 
     const xAxisLines = new AxisLines(
       device,
@@ -158,7 +161,8 @@ export class Sim {
         this.device &&
         this.renderPassDescriptor &&
         this.pipeline &&
-        this.projection
+        this.projection &&
+        this.camera
       )
     ) {
       console.log("missing deps, can't render");
@@ -177,12 +181,16 @@ export class Sim {
   };
 
   setCameraEulers = (pitch: number, yaw: number, roll: number) => {
+    if (!this.camera) return;
+
     this.camera.pitch = pitch;
     this.camera.yaw = yaw;
     this.camera.roll = roll;
   };
 
   setCameraTranslation = (translation: vec3) => {
+    if (!this.camera) return;
+
     this.camera.position = translation;
   };
 }

@@ -17,7 +17,7 @@ export class App {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
-    this.sim = new Sim(canvas, this.cameraPos);
+    this.sim = new Sim(canvas);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);
@@ -25,7 +25,7 @@ export class App {
   }
 
   async init(navigator: Navigator) {
-    await this.sim.init(navigator);
+    await this.sim.init(navigator, this.cameraPos);
   }
 
   handleKeypress(event: any) {

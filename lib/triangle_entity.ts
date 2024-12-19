@@ -1,5 +1,6 @@
 import { mat4, vec3 } from "gl-matrix";
 import { Entity } from "./entity";
+import { THROWAWAY_ID } from "./constants";
 
 // for now inheritance, may change
 // these functions should be generic for all drawables anyway
@@ -13,7 +14,7 @@ export class TriangleEntity extends Entity {
           0.0, 0.5, TriangleEntity.z, 
           -0.5, -0.5, TriangleEntity.z, 
           0.5, -0.5, TriangleEntity.z,
-      ])
+      ], THROWAWAY_ID)
   }
 
   center = (): vec3 => {
