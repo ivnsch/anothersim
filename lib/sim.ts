@@ -285,16 +285,12 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
     entries: [
       { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: {} },
-      {
-        binding: 2,
-        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-        buffer: {},
-      },
+      { binding: 2, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
-      { binding: 7, visibility: GPUShaderStage.FRAGMENT, buffer: {} },
+      { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };

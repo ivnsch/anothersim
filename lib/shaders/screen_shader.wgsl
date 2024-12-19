@@ -38,8 +38,8 @@ fn vs_main(
         output.color = vec4<f32>(0.5, 0.5, 1.0, 0.0); // light blue
     } else if (meshType == 3) { // cube instances
         transformed = cube_transforms[instance_idx] * vertex_4;
-        // color set in fragment shader
-    }else { // unexpected
+        output.color = cube_color_map[instance_idx];
+    } else { // unexpected
         output.color = vec4<f32>(0.0, 0.0, 0.0, 0.0); // black
     }
 
@@ -52,13 +52,6 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(
-    @location(0) color: vec4<f32>, 
-    @location(1) @interpolate(flat) instance_idx: u32
-) -> @location(0) vec4<f32> {
-    if (meshType == 3) { // cube instances
-        return cube_color_map[instance_idx];
-    } else {
-        return color;
-    }
+fn fs_main(@location(0) color: vec4<f32>) -> @location(0) vec4<f32> {
+    return color;
 }
