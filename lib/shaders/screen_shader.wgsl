@@ -1,6 +1,6 @@
 struct OurVertexShaderOutput {
     @builtin(position) position: vec4f,
-    @location(0) color: vec3<f32>,
+    @location(0) color: vec4<f32>,
     @location(1) @interpolate(flat) instance_idx: u32
 };
 
@@ -28,19 +28,19 @@ fn vs_main(
     if (meshType == 0) { // x axis
         // position instance
         transformed = x_axes_transforms[instance_idx] * vertex_4;
-        output.color = vec3<f32>(0.0, 0.0, 1.0); // blue
+        output.color = vec4<f32>(0.0, 0.0, 1.0, 0.0); // blue
         // don't transform axis
     } else if (meshType == 1) { // y axis
         transformed = vertex_4;
-        output.color = vec3<f32>(0.0, 1.0, 0.0); // green
+        output.color = vec4<f32>(0.0, 1.0, 0.0, 0.0); // green
     } else if (meshType == 2) { // z axis new
         transformed = z_axes_transforms_new[instance_idx] * vertex_4;
-        output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
+        output.color = vec4<f32>(0.5, 0.5, 1.0, 0.0); // light blue
     } else if (meshType == 3) { // cube instances
         transformed = cube_transforms[instance_idx] * vertex_4;
         // color set in fragment shader
     }else { // unexpected
-        output.color = vec3<f32>(0.0, 0.0, 0.0); // black
+        output.color = vec4<f32>(0.0, 0.0, 0.0, 0.0); // black
     }
 
     transformed = projection * camera * transformed;
@@ -53,12 +53,12 @@ fn vs_main(
 
 @fragment
 fn fs_main(
-    @location(0) color: vec3<f32>, 
+    @location(0) color: vec4<f32>, 
     @location(1) @interpolate(flat) instance_idx: u32
 ) -> @location(0) vec4<f32> {
     if (meshType == 3) { // cube instances
         return cube_color_map[instance_idx];
     } else {
-        return vec4<f32>(color, 1.0);
+        return color;
     }
 }
