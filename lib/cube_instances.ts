@@ -119,6 +119,10 @@ export class CubeInstances extends Entity {
   };
 
   applyPhysics = (time: number) => {
+    // this.applyGravity(time);
+  };
+
+  applyGravity = (time: number) => {
     const seconds = time / 1000;
     const timeDelta = seconds - this.lastTime;
 
