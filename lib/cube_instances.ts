@@ -1,7 +1,6 @@
-import { mat4, vec3 } from "gl-matrix";
+import { mat4, vec3, vec4 } from "gl-matrix";
 import { Entity } from "./entity";
 import { vertices } from "./cube_entity";
-import { prettyPrintMat4 } from "./matrix_3x3";
 
 // for now inheritance, may change
 // these functions should be generic for all drawables anyway
@@ -18,6 +17,12 @@ export class CubeInstances extends Entity {
     this.matrixFloatCount * this.numInstances
   );
 
+  colorsBuffer: GPUBuffer;
+  colorVectorFloatCount = 4;
+  instancesColors = new Float32Array(
+    this.colorVectorFloatCount * this.numInstances
+  );
+
   constructor(device: GPUDevice) {
     // x y z
     // prettier-ignore
@@ -25,6 +30,8 @@ export class CubeInstances extends Entity {
 
     this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
+    this.colorsBuffer = this.createColorsBuffer(device, "cube colors buffer");
+    this.fillColorsBuffer();
   }
 
   private initInstances = () => {
@@ -60,12 +67,31 @@ export class CubeInstances extends Entity {
     device: GPUDevice,
     label: string
   ): GPUBuffer => {
-    const xAxesInstancesBufferSize = this.numInstances * this.matrixSize;
+    const bufferSize = this.numInstances * this.matrixSize;
     return device.createBuffer({
       label: label,
-      size: xAxesInstancesBufferSize,
+      size: bufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
+  };
+
+  private createColorsBuffer = (
+    device: GPUDevice,
+    label: string
+  ): GPUBuffer => {
+    const bufferSize = this.instancesColors.byteLength;
+    return device.createBuffer({
+      label: label,
+      size: bufferSize,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+  };
+
+  private fillColorsBuffer = () => {
+    for (let index = 0; index < this.numInstances; index++) {
+      const color = vec4.fromValues(1.0, 0.0, 0.0, 0.0);
+      this.instancesColors.set(color, this.colorVectorFloatCount * index);
+    }
   };
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
@@ -81,6 +107,14 @@ export class CubeInstances extends Entity {
       this.instancesMatrices.buffer,
       this.instancesMatrices.byteOffset,
       this.instancesMatrices.byteLength
+    );
+
+    device.queue.writeBuffer(
+      this.colorsBuffer,
+      0,
+      this.instancesColors.buffer,
+      this.instancesColors.byteOffset,
+      this.instancesColors.byteLength
     );
   };
 

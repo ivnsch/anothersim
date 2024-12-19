@@ -1,6 +1,7 @@
 struct OurVertexShaderOutput {
     @builtin(position) position: vec4f,
-    @location(0) color: vec3<f32>
+    @location(0) color: vec3<f32>,
+    @location(1) @interpolate(flat) instance_idx: u32
 };
 
 @binding(0) @group(0) var<uniform> projection: mat4x4<f32>;
@@ -10,6 +11,7 @@ struct OurVertexShaderOutput {
 @binding(4) @group(0) var<uniform> z_axes_transforms_new: array<mat4x4f, 20>;
 @binding(5) @group(0) var<uniform> identity: mat4x4f; // for debugging sometimes..
 @binding(6) @group(0) var<uniform> cube_transforms: array<mat4x4f, 100>;
+@binding(7) @group(0) var<uniform> cube_color_map: array<vec4<f32>, 100>;
 
 @vertex
 fn vs_main(
@@ -36,7 +38,7 @@ fn vs_main(
         output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
     } else if (meshType == 3) { // cube instances
         transformed = cube_transforms[instance_idx] * vertex_4;
-        output.color = vec3<f32>(0.5, 0.5, 1.0); // light blue
+        // color set in fragment shader
     }else { // unexpected
         output.color = vec3<f32>(0.0, 0.0, 0.0); // black
     }
@@ -44,10 +46,19 @@ fn vs_main(
     transformed = projection * camera * transformed;
 
     output.position = transformed;
+    output.instance_idx = instance_idx;
+
     return output;
 }
 
 @fragment
-fn fs_main(@location(0) color: vec3<f32>) -> @location(0) vec4<f32> {
-    return vec4<f32>(color, 1.0);
+fn fs_main(
+    @location(0) color: vec3<f32>, 
+    @location(1) @interpolate(flat) instance_idx: u32
+) -> @location(0) vec4<f32> {
+    if (meshType == 3) { // cube instances
+        return cube_color_map[instance_idx];
+    } else {
+        return vec4<f32>(color, 1.0);
+    }
 }
