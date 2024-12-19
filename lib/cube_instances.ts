@@ -108,11 +108,12 @@ export class CubeInstances extends Entity {
       mat4.translate(matrix, matrix, positionDelta);
 
       const boundY = 2;
+      const collisionDamping = 0.9;
       if (matrix[13] < -boundY) {
         matrix[13] = -boundY;
 
         if (this.velocity[1] < 0) {
-          this.velocity[1] *= -1;
+          this.velocity[1] *= -1 * collisionDamping;
         }
       }
     });
