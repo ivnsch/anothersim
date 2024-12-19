@@ -12,8 +12,8 @@ struct OurVertexShaderOutput {
 @binding(5) @group(0) var<uniform> identity: mat4x4f; // for debugging sometimes..
 @binding(6) @group(0) var<uniform> cube_transforms: array<mat4x4f, 100>;
 @binding(7) @group(0) var<uniform> cube_color_map: array<vec4<f32>, 100>;
-@binding(8) @group(0) var<uniform> cube_density_transforms: array<mat4x4f, 100>;
-@binding(9) @group(0) var<uniform> cube_density_color_map: array<vec4<f32>, 100>;
+@binding(8) @group(0) var<uniform> cube_density_transforms: array<mat4x4f, 1000>;
+@binding(9) @group(0) var<uniform> cube_density_color_map: array<vec4<f32>, 1000>;
 
 @vertex
 fn vs_main(

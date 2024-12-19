@@ -8,8 +8,10 @@ export class CubeDensityInstances extends Entity {
   private lastTime: number = 0;
   private velocities: vec3[] = [];
 
+  spacing = 10;
+
   instancesBuffer: GPUBuffer;
-  numInstances = 100; // remember to set this in *_axes_transforms in the shader too
+  numInstances = Math.pow(this.spacing, 3); // remember to set this in *_axes_transforms in the shader too
   matrixFloatCount = 16; // 4x4 matrix
   matrixSize = 4 * this.matrixFloatCount;
   private matrices: mat4[] = [];
@@ -31,29 +33,50 @@ export class CubeDensityInstances extends Entity {
     this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
     this.colorsBuffer = this.createColorsBuffer(device, "cube colors buffer");
-    this.fillColorsBuffer();
+    this.initColors();
   }
 
   private initInstances = () => {
-    for (let i = 0; i < this.numInstances; i++) {
-      const m = mat4.create();
-      mat4.identity(m);
-      // random position on y = 0 plane
-      const bound = 4; // TODO derive
-      const randomX = Math.random() * bound - bound / 2;
-      const randomZ = Math.random() * bound - bound / 2;
-      const randomY = Math.random() * bound - bound / 2;
-      const v = vec3.fromValues(randomX, randomY, randomZ);
-      mat4.translate(m, m, v);
-      // scale cubes down
-      const scale = 0.1;
-      const scaleV = vec3.fromValues(scale, scale, scale);
-      mat4.scale(m, m, scaleV);
-      // add transform matrix
-      this.matrices.push(m);
-      this.velocities.push(vec3.create());
+    var index = 0;
+
+    const hs = this.spacing / 2; // half spacing
+
+    for (let x = 0; x < this.spacing; x++) {
+      for (let y = 0; y < this.spacing; y++) {
+        for (let z = 0; z < this.spacing; z++) {
+          const m = mat4.create();
+          mat4.identity(m);
+          // add at grid position
+          const v = vec3.fromValues(x - hs, y - hs, z - hs);
+          mat4.translate(m, m, v);
+          // scale cubes down
+          const scale = 0.1;
+          const scaleV = vec3.fromValues(scale, scale, scale);
+          mat4.scale(m, m, scaleV);
+          // add transform matrix
+          this.matrices.push(m);
+          this.velocities.push(vec3.create());
+          index++;
+        }
+      }
     }
     this.updateInstanceMatrices();
+  };
+
+  initColors = () => {
+    const spacing = 10;
+    const radius = 0.1;
+    var index = 0;
+    for (let x = 0; x < spacing; x++) {
+      for (let y = 0; y < spacing; y++) {
+        for (let z = 0; z < spacing; z++) {
+          const density = calcDensity(vec3.fromValues(x, y, z), radius);
+          const color = colorForDensity(density);
+          this.instancesColors.set(color, this.colorVectorFloatCount * index);
+          index++;
+        }
+      }
+    }
   };
 
   // updates instance matrices to match matrices
@@ -160,3 +183,11 @@ export class CubeDensityInstances extends Entity {
     this.updateInstanceMatrices();
   };
 }
+
+const calcDensity = (position: vec3, radius: number) => {
+  return 0;
+};
+
+const colorForDensity = (density: number): vec4 => {
+  return vec4.fromValues(0, 0, 1, 0);
+};

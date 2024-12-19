@@ -31,7 +31,7 @@ export class CubeInstances extends Entity {
     this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
     this.colorsBuffer = this.createColorsBuffer(device, "cube colors buffer");
-    this.fillColorsBuffer();
+    this.initColors();
   }
 
   private initInstances = () => {
@@ -87,7 +87,7 @@ export class CubeInstances extends Entity {
     });
   };
 
-  private fillColorsBuffer = () => {
+  private initColors = () => {
     for (let index = 0; index < this.numInstances; index++) {
       const color = vec4.fromValues(1.0, 0.0, 0.0, 0.0);
       this.instancesColors.set(color, this.colorVectorFloatCount * index);
