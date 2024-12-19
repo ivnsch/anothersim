@@ -8,6 +8,8 @@ export class CubeDensityInstances extends Entity {
   private lastTime: number = 0;
   private velocities: vec3[] = [];
 
+  private cubePositions: vec3[] = [];
+
   spacing = 10;
 
   instancesBuffer: GPUBuffer;
@@ -25,10 +27,12 @@ export class CubeDensityInstances extends Entity {
     this.colorVectorFloatCount * this.numInstances
   );
 
-  constructor(device: GPUDevice) {
+  constructor(device: GPUDevice, cubePositions: vec3[]) {
     // x y z
     // prettier-ignore
     super(device, vertices(-4))
+
+    this.cubePositions = cubePositions;
 
     this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
@@ -64,13 +68,14 @@ export class CubeDensityInstances extends Entity {
   };
 
   initColors = () => {
-    const spacing = 10;
-    const radius = 0.1;
     var index = 0;
-    for (let x = 0; x < spacing; x++) {
-      for (let y = 0; y < spacing; y++) {
-        for (let z = 0; z < spacing; z++) {
-          const density = calcDensity(vec3.fromValues(x, y, z), radius);
+    for (let x = 0; x < this.spacing; x++) {
+      for (let y = 0; y < this.spacing; y++) {
+        for (let z = 0; z < this.spacing; z++) {
+          const density = calcDensity(
+            vec3.fromValues(x, y, z),
+            this.cubePositions
+          );
           const color = colorForDensity(density);
           this.instancesColors.set(color, this.colorVectorFloatCount * index);
           index++;
@@ -108,13 +113,6 @@ export class CubeDensityInstances extends Entity {
       size: bufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-  };
-
-  private fillColorsBuffer = () => {
-    for (let index = 0; index < this.numInstances; index++) {
-      const color = vec4.fromValues(0.0, 0.0, 1.0, 0.0);
-      this.instancesColors.set(color, this.colorVectorFloatCount * index);
-    }
   };
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
@@ -184,10 +182,44 @@ export class CubeDensityInstances extends Entity {
   };
 }
 
-const calcDensity = (position: vec3, radius: number) => {
-  return 0;
+const calcDensity = (samplePoint: vec3, positions: vec3[]) => {
+  const radius = 5;
+  const mass = 1;
+
+  let totalDensity = 0;
+
+  positions.forEach((position) => {
+    const distance = vec3.distance(position, samplePoint);
+    const influece = smoothingKernel(radius, distance);
+    totalDensity += mass * influece;
+  });
+  return totalDensity;
+};
+
+const smoothingKernel = (radius: number, distance: number) => {
+  const volume = (Math.PI * Math.pow(radius, 8)) / 4;
+  const value = Math.max(0, radius * radius - distance * distance);
+  return Math.pow(value, 3) / volume;
 };
 
 const colorForDensity = (density: number): vec4 => {
-  return vec4.fromValues(0, 0, 1, 0);
+  if (density < 0.1) {
+    return vec4.fromValues(0, 0, 1, 0);
+  } else if (density < 0.4) {
+    return vec4.fromValues(0.2, 0.2, 1, 0);
+  } else if (density < 0.8) {
+    return vec4.fromValues(0.4, 0.4, 1, 0);
+  } else if (density < 1.2) {
+    return vec4.fromValues(0.6, 0.6, 1, 0);
+  } else if (density < 1.6) {
+    return vec4.fromValues(0.8, 0.6, 1, 0);
+  } else if (density < 2.0) {
+    return vec4.fromValues(1, 0.4, 0.8, 0);
+  } else if (density < 2.4) {
+    return vec4.fromValues(1, 0.2, 0.4, 0);
+  } else if (density < 2.8) {
+    return vec4.fromValues(1, 0.1, 0.2, 0);
+  } else {
+    return vec4.fromValues(1, 0, 0, 0);
+  }
 };

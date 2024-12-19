@@ -8,25 +8,29 @@ export class CubeInstances extends Entity {
   private lastTime: number = 0;
   private velocities: vec3[] = [];
 
+  private initPositions: vec3[] = [];
+
   instancesBuffer: GPUBuffer;
-  numInstances = 100; // remember to set this in *_axes_transforms in the shader too
+  static numInstances = 100; // remember to set this in *_axes_transforms in the shader too
   matrixFloatCount = 16; // 4x4 matrix
   matrixSize = 4 * this.matrixFloatCount;
   private matrices: mat4[] = [];
   instancesMatrices = new Float32Array(
-    this.matrixFloatCount * this.numInstances
+    this.matrixFloatCount * CubeInstances.numInstances
   );
 
   colorsBuffer: GPUBuffer;
   colorVectorFloatCount = 4;
   instancesColors = new Float32Array(
-    this.colorVectorFloatCount * this.numInstances
+    this.colorVectorFloatCount * CubeInstances.numInstances
   );
 
-  constructor(device: GPUDevice) {
+  constructor(device: GPUDevice, positions: vec3[]) {
     // x y z
     // prettier-ignore
     super(device, vertices(-4))
+
+    this.initPositions = positions;
 
     this.initInstances();
     this.instancesBuffer = this.createInstancesBuffer(device, "cube instances");
@@ -35,16 +39,11 @@ export class CubeInstances extends Entity {
   }
 
   private initInstances = () => {
-    for (let i = 0; i < this.numInstances; i++) {
+    this.initPositions.forEach((position) => {
       const m = mat4.create();
       mat4.identity(m);
       // random position on y = 0 plane
-      const bound = 4; // TODO derive
-      const randomX = Math.random() * bound - bound / 2;
-      const randomZ = Math.random() * bound - bound / 2;
-      const randomY = Math.random() * bound - bound / 2;
-      const v = vec3.fromValues(randomX, randomY, randomZ);
-      mat4.translate(m, m, v);
+      mat4.translate(m, m, position);
       // scale cubes down
       const scale = 0.1;
       const scaleV = vec3.fromValues(scale, scale, scale);
@@ -52,7 +51,8 @@ export class CubeInstances extends Entity {
       // add transform matrix
       this.matrices.push(m);
       this.velocities.push(vec3.create());
-    }
+    });
+
     this.updateInstanceMatrices();
   };
 
@@ -67,7 +67,7 @@ export class CubeInstances extends Entity {
     device: GPUDevice,
     label: string
   ): GPUBuffer => {
-    const bufferSize = this.numInstances * this.matrixSize;
+    const bufferSize = CubeInstances.numInstances * this.matrixSize;
     return device.createBuffer({
       label: label,
       size: bufferSize,
@@ -88,7 +88,7 @@ export class CubeInstances extends Entity {
   };
 
   private initColors = () => {
-    for (let index = 0; index < this.numInstances; index++) {
+    for (let index = 0; index < CubeInstances.numInstances; index++) {
       const color = vec4.fromValues(1.0, 0.0, 0.0, 0.0);
       this.instancesColors.set(color, this.colorVectorFloatCount * index);
     }
@@ -99,7 +99,7 @@ export class CubeInstances extends Entity {
 
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
-    pass.draw(36, this.numInstances);
+    pass.draw(36, CubeInstances.numInstances);
 
     device.queue.writeBuffer(
       this.instancesBuffer,

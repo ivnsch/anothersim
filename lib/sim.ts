@@ -56,8 +56,12 @@ export class Sim {
     this.adapter = adapter;
     this.device = device;
 
-    const cubeInstances = new CubeInstances(this.device);
-    const cubeDensityInstances = new CubeDensityInstances(this.device);
+    const cubePositions = generateInitCubePositions(CubeInstances.numInstances);
+    const cubeInstances = new CubeInstances(this.device, cubePositions);
+    const cubeDensityInstances = new CubeDensityInstances(
+      this.device,
+      cubePositions
+    );
 
     const xAxisLines = new AxisLines(
       device,
@@ -497,4 +501,20 @@ export const createY0PlaneVerticalLinesTranslationMatrix = (
   const m = mat4.create();
   mat4.fromTranslation(m, vec3.fromValues(x, 0, 0));
   return m;
+};
+
+const generateInitCubePositions = (cubeCount: number): vec3[] => {
+  let positions = [];
+  for (let i = 0; i < cubeCount; i++) {
+    const m = mat4.create();
+    mat4.identity(m);
+    // random position on y = 0 plane
+    const bound = 4; // TODO derive
+    const randomX = Math.random() * bound - bound / 2;
+    const randomZ = Math.random() * bound - bound / 2;
+    const randomY = Math.random() * bound - bound / 2;
+    const v = vec3.fromValues(randomX, randomY, randomZ);
+    positions.push(v);
+  }
+  return positions;
 };
