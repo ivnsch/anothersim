@@ -1,6 +1,6 @@
 import { mat4, vec3 } from "gl-matrix";
 import { AxisLines } from "./axis_lines";
-import { xAxisVerticesNew, yAxisVertices, zAxisVerticesNew } from "./axis_mesh";
+import { xAxisVertices, yAxisVertices, zAxisVertices } from "./axis_mesh";
 import { Camera } from "./camera";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants";
 import my_shader from "./shaders/screen_shader.wgsl";
@@ -57,16 +57,16 @@ export class Sim {
 
     const xAxisLines = new AxisLines(
       device,
-      "x axes instances buffer (new)",
-      xAxisVerticesNew(),
+      "x axes instances buffer",
+      xAxisVertices(),
       0,
       createY0PlaneHorizontalLinesTranslationMatrix
     );
     const yAxis = new Axis(device, yAxisVertices(), 1);
     const zAxisLines = new AxisLines(
       device,
-      "z axes instances buffer (new)",
-      zAxisVerticesNew(),
+      "z axes instances buffer",
+      zAxisVertices(),
       2,
       createY0PlaneVerticalLinesTranslationMatrix
     );
@@ -108,9 +108,9 @@ export class Sim {
     };
 
     cubeInstances.initBindGroup(bindGroupDeps, "cube instances bind group");
-    xAxisLines.initBindGroup(bindGroupDeps, "x axis bind group (new)");
+    xAxisLines.initBindGroup(bindGroupDeps, "x axis bind group");
     yAxis.initBindGroup(bindGroupDeps, "y axis bind group");
-    zAxisLines.initBindGroup(bindGroupDeps, "z axis bind group (new)");
+    zAxisLines.initBindGroup(bindGroupDeps, "z axis bind group");
     cubeDensityInstances.initBindGroup(
       bindGroupDeps,
       "cube density instances bind group"
