@@ -66,12 +66,11 @@ export class Entity {
       deps.bindGroupLayout,
       deps.cubeInstances,
       deps.cubeDensityInstances,
-      deps.projectionBuffer,
+      deps.projection,
       deps.cameraBuffer,
       this.meshTypeBuffer!,
       deps.xAxisLines,
-      deps.zAxisLines,
-      deps.identityBuffer
+      deps.zAxisLines
     );
     this.bindGroup = bindGroup;
   };

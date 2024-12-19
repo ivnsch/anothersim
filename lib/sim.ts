@@ -8,6 +8,7 @@ import { Axis } from "./axis";
 import { Entity } from "./entity";
 import { CubeInstances } from "./cube_instances";
 import { CubeDensityInstances } from "./cube_density_instances";
+import { Projection } from "./projection";
 
 export class Sim {
   adapter: GPUAdapter | null = null;
@@ -19,8 +20,7 @@ export class Sim {
 
   renderPassDescriptor: GPURenderPassDescriptor | null = null;
 
-  projectionBuffer: GPUBuffer | null = null;
-  projection: mat4;
+  projection: Projection | null = null;
 
   camera: Camera;
 
@@ -32,7 +32,6 @@ export class Sim {
     this.presentationFormat = "bgra8unorm";
     this.context = <GPUCanvasContext>canvas.getContext("webgpu");
 
-    this.projection = createProjectionMatrix();
     this.camera = new Camera(cameraPos);
   }
 
@@ -49,6 +48,9 @@ export class Sim {
   private initInternal = async (adapter: GPUAdapter, device: GPUDevice) => {
     this.adapter = adapter;
     this.device = device;
+
+    const projection = new Projection(device);
+    this.projection = projection;
 
     const xAxisLines = new AxisLines(
       device,
@@ -86,7 +88,6 @@ export class Sim {
       format: this.presentationFormat,
     });
 
-    this.projectionBuffer = createMatrixUniformBuffer(device);
     this.camera.buffer = createMatrixUniformBuffer(device);
 
     const bindGroupLayout = createBindGroupLayout(this.device);
@@ -101,7 +102,7 @@ export class Sim {
       bindGroupLayout: bindGroupLayout,
       cubeInstances: cubeInstances,
       cubeDensityInstances: cubeDensityInstances,
-      projectionBuffer: this.projectionBuffer!,
+      projection: projection,
       cameraBuffer: this.camera.buffer!,
       xAxisLines: xAxisLines,
       zAxisLines: zAxisLines,
@@ -157,7 +158,7 @@ export class Sim {
         this.device &&
         this.renderPassDescriptor &&
         this.pipeline &&
-        this.projectionBuffer
+        this.projection
       )
     ) {
       console.log("missing deps, can't render");
@@ -170,7 +171,6 @@ export class Sim {
       this.renderPassDescriptor,
       this.pipeline,
       this.entities,
-      this.projectionBuffer,
       this.projection,
       this.camera
     );
@@ -193,9 +193,7 @@ const render = (
   renderPassDescriptor: GPURenderPassDescriptor,
   pipeline: GPURenderPipeline,
   entities: Entity[],
-
-  projectionBuffer: GPUBuffer,
-  projection: mat4,
+  projection: Projection,
   camera: Camera
 ) => {
   camera.update();
@@ -214,7 +212,11 @@ const render = (
   const commandBuffer = encoder.finish();
   device.queue.submit([commandBuffer]);
 
-  device.queue.writeBuffer(projectionBuffer, 0, <ArrayBuffer>projection);
+  device.queue.writeBuffer(
+    projection.buffer,
+    0,
+    <ArrayBuffer>projection.matrix
+  );
   device.queue.writeBuffer(camera.buffer, 0, <ArrayBuffer>camera.matrix());
 };
 
@@ -262,7 +264,7 @@ export type BindGroupDeps = {
   cubeInstances: CubeInstances;
   cubeDensityInstances: CubeDensityInstances;
   cameraBuffer: GPUBuffer;
-  projectionBuffer: GPUBuffer;
+  projection: Projection;
 };
 
 export const createBindGroup = (
@@ -271,7 +273,7 @@ export const createBindGroup = (
   bindGroupLayout: GPUBindGroupLayout,
   cubeInstances: CubeInstances,
   cubeDensityInstances: CubeDensityInstances,
-  projectionBuffer: GPUBuffer,
+  projection: Projection,
   cameraBuffer: GPUBuffer,
   meshTypeBuffer: GPUBuffer,
   xAxisLines: AxisLines,
@@ -281,7 +283,7 @@ export const createBindGroup = (
     label: label,
     layout: bindGroupLayout,
     entries: [
-      { binding: 0, resource: { buffer: projectionBuffer } },
+      { binding: 0, resource: { buffer: projection.buffer } },
       { binding: 1, resource: { buffer: cameraBuffer } },
       { binding: 2, resource: { buffer: meshTypeBuffer } },
       { binding: 3, resource: { buffer: xAxisLines.instancesBuffer } },
@@ -379,12 +381,6 @@ type DepthBufferResources = {
   depthStencilBuffer: GPUTexture;
   depthStencilView: GPUTextureView;
   depthStencilAttachment: GPURenderPassDepthStencilAttachment;
-};
-
-const createProjectionMatrix = () => {
-  const m = mat4.create();
-  mat4.perspective(m, Math.PI / 4, 800 / 600, 0.1, 10);
-  return m;
 };
 
 export const createIdentityMatrix = () => {
