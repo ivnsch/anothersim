@@ -95,11 +95,6 @@ export class Sim {
 
     const bindGroupLayout = createBindGroupLayout(this.device);
 
-    // bind groups
-    // this part looks overly verbose but not sure how to refactor
-    // the approach itself feels slightly weird, but it works..
-    // also ideally it should be initialized in the respective entities? but too many dependencies..
-
     const bindGroupDeps = {
       device: this.device,
       bindGroupLayout: bindGroupLayout,
