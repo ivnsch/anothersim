@@ -35,7 +35,8 @@ export class CubeInstances extends Entity {
       const bound = 4; // TODO derive
       const randomX = Math.random() * bound - bound / 2;
       const randomZ = Math.random() * bound - bound / 2;
-      const v = vec3.fromValues(randomX, 0, randomZ);
+      const randomY = Math.random() * bound - bound / 2;
+      const v = vec3.fromValues(randomX, randomY, randomZ);
       mat4.translate(m, m, v);
       // scale cubes down
       const scale = 0.1;
