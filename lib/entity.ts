@@ -55,7 +55,7 @@ export class Entity {
     device.queue.writeBuffer(
       this.transformBuffer,
       0,
-      <ArrayBuffer>this.transformMatrix
+      this.transformMatrix as Float32Array
     );
   };
 

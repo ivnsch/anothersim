@@ -218,9 +218,9 @@ const render = (
   device.queue.writeBuffer(
     projection.buffer,
     0,
-    <ArrayBuffer>projection.matrix
+    projection.matrix as Float32Array
   );
-  device.queue.writeBuffer(camera.buffer, 0, <ArrayBuffer>camera.matrix());
+  device.queue.writeBuffer(camera.buffer, 0, camera.matrix() as Float32Array);
 };
 
 const createRenderPassDescriptor = (
@@ -335,7 +335,7 @@ const createPipeline = (
 };
 
 const makeDepthBufferResources = (device: GPUDevice): DepthBufferResources => {
-  const depthStencilState = {
+  const depthStencilState: GPUDepthStencilState = {
     format: "depth24plus-stencil8",
     depthWriteEnabled: true,
     depthCompare: "less-equal",
@@ -362,7 +362,7 @@ const makeDepthBufferResources = (device: GPUDevice): DepthBufferResources => {
   };
   const depthStencilView = depthStencilBuffer.createView();
 
-  const depthStencilAttachment = {
+  const depthStencilAttachment: GPURenderPassDepthStencilAttachment = {
     view: depthStencilView,
     depthClearValue: 1.0,
     depthLoadOp: "clear",

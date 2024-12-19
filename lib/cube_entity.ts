@@ -1,6 +1,7 @@
 import { mat4, vec2, vec3 } from "gl-matrix";
 import { Entity } from "./entity";
 import { prettyPrintMat4 } from "./matrix_3x3";
+import { THROWAWAY_ID } from "./constants";
 
 // for now inheritance, may change
 // these functions should be generic for all drawables anyway
@@ -11,7 +12,7 @@ export class CubeEntity extends Entity {
   constructor(device: GPUDevice) {
     // x y z
     // prettier-ignore
-    super(device, vertices(-4))
+    super(device, vertices(-4), THROWAWAY_ID)
   }
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
@@ -43,7 +44,7 @@ export class CubeEntity extends Entity {
     device.queue.writeBuffer(
       this.transformBuffer,
       0,
-      <ArrayBuffer>this.transformMatrix
+      this.transformMatrix as Float32Array
     );
   };
 }
