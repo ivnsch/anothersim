@@ -4,10 +4,10 @@ import { xAxisVerticesNew, yAxisVertices, zAxisVerticesNew } from "./axis_mesh";
 import { Camera } from "./camera";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants";
 import my_shader from "./shaders/screen_shader.wgsl";
-import { CubeEntity } from "./cube_entity";
 import { Axis } from "./axis";
 import { Entity } from "./entity";
 import { CubeInstances } from "./cube_instances";
+import { CubeDensityInstances } from "./cube_density_instances";
 
 export class Sim {
   adapter: GPUAdapter | null = null;
@@ -57,6 +57,8 @@ export class Sim {
     this.device = device;
 
     const cubeInstances = new CubeInstances(this.device);
+    const cubeDensityInstances = new CubeDensityInstances(this.device);
+
     const xAxisLines = new AxisLines(
       device,
       "x axes instances buffer (new)",
@@ -71,7 +73,13 @@ export class Sim {
     );
     const yAxis = new Axis(device, yAxisVertices());
 
-    this.entities = [yAxis, xAxisLines, zAxisLines, cubeInstances];
+    this.entities = [
+      yAxis,
+      xAxisLines,
+      zAxisLines,
+      cubeInstances,
+      cubeDensityInstances,
+    ];
 
     this.context.configure({
       device: device,
@@ -87,6 +95,7 @@ export class Sim {
     yAxis.initMeshType(device, 1);
     zAxisLines.initMeshType(device, 2);
     cubeInstances.initMeshType(device, 3);
+    cubeDensityInstances.initMeshType(device, 4);
 
     this.identityBuffer = device.createBuffer({
       label: "identity buffer",
@@ -106,6 +115,7 @@ export class Sim {
       this.device,
       bindGroupLayout,
       cubeInstances,
+      cubeDensityInstances,
       this.projectionBuffer,
       this.camera.buffer,
       cubeInstances.meshTypeBuffer,
@@ -119,6 +129,7 @@ export class Sim {
       this.device,
       bindGroupLayout,
       cubeInstances,
+      cubeDensityInstances,
       this.projectionBuffer,
       this.camera.buffer,
       xAxisLines.meshTypeBuffer,
@@ -132,6 +143,7 @@ export class Sim {
       this.device,
       bindGroupLayout,
       cubeInstances,
+      cubeDensityInstances,
       this.projectionBuffer,
       this.camera.buffer,
       yAxis.meshTypeBuffer,
@@ -145,9 +157,24 @@ export class Sim {
       this.device,
       bindGroupLayout,
       cubeInstances,
+      cubeDensityInstances,
       this.projectionBuffer,
       this.camera.buffer,
       zAxisLines.meshTypeBuffer,
+      xAxisLines,
+      zAxisLines,
+      this.identityBuffer
+    );
+
+    cubeDensityInstances.bindGroup = createBindGroup(
+      "cube density instances bind group",
+      this.device,
+      bindGroupLayout,
+      cubeInstances,
+      cubeDensityInstances,
+      this.projectionBuffer,
+      this.camera.buffer,
+      cubeDensityInstances.meshTypeBuffer,
       xAxisLines,
       zAxisLines,
       this.identityBuffer
@@ -291,6 +318,8 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 5, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
+      { binding: 8, visibility: GPUShaderStage.VERTEX, buffer: {} },
+      { binding: 9, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };
@@ -300,6 +329,7 @@ const createBindGroup = (
   device: GPUDevice,
   bindGroupLayout: GPUBindGroupLayout,
   cubeInstances: CubeInstances,
+  cubeDensityInstances: CubeDensityInstances,
   projectionBuffer: GPUBuffer,
   cameraBuffer: GPUBuffer,
   meshTypeBuffer: GPUBuffer,
@@ -319,6 +349,11 @@ const createBindGroup = (
       { binding: 5, resource: { buffer: identityBuffer } },
       { binding: 6, resource: { buffer: cubeInstances.instancesBuffer } },
       { binding: 7, resource: { buffer: cubeInstances.colorsBuffer } },
+      {
+        binding: 8,
+        resource: { buffer: cubeDensityInstances.instancesBuffer },
+      },
+      { binding: 9, resource: { buffer: cubeDensityInstances.colorsBuffer } },
     ],
   });
 };
