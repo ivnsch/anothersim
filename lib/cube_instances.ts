@@ -1,6 +1,7 @@
 import { mat4, vec3 } from "gl-matrix";
 import { Entity } from "./entity";
 import { vertices } from "./cube_entity";
+import { prettyPrintMat4 } from "./matrix_3x3";
 
 // for now inheritance, may change
 // these functions should be generic for all drawables anyway
@@ -30,13 +31,17 @@ export class CubeInstances extends Entity {
     for (let i = 0; i < this.numInstances; i++) {
       const m = mat4.create();
       mat4.identity(m);
-      const randomX = Math.random() * 6 - 3;
-      const randomZ = Math.random() * 6 - 3;
+      // random position on y = 0 plane
+      const bound = 4; // TODO derive
+      const randomX = Math.random() * bound - bound / 2;
+      const randomZ = Math.random() * bound - bound / 2;
       const v = vec3.fromValues(randomX, 0, randomZ);
       mat4.translate(m, m, v);
+      // scale cubes down
       const scale = 0.1;
       const scaleV = vec3.fromValues(scale, scale, scale);
       mat4.scale(m, m, scaleV);
+      // add transform matrix
       this.matrices.push(m);
     }
     this.updateInstanceMatrices();
@@ -62,30 +67,7 @@ export class CubeInstances extends Entity {
   };
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
-    const seconds = time / 1000;
-    const timeDelta = seconds - this.lastTime;
-
-    // in the first iteration timeDelta is too large
-    // the cube would start with a noticeable offset
-    // so we just store the time and exit
-    if (!this.lastTime) {
-      this.lastTime = seconds;
-      return;
-    }
-
-    const velocityDelta = vec3.create();
-    vec3.scale(velocityDelta, vec3.fromValues(0, 1, 0), -9.8 * timeDelta);
-    vec3.add(this.velocity, this.velocity, velocityDelta);
-    vec3.scale(this.velocity, this.velocity, 0.01); // slow down for better visualization
-
-    const positionDelta = vec3.create();
-    vec3.scale(positionDelta, this.velocity, timeDelta);
-
-    this.matrices.forEach((matrix) => {
-      mat4.translate(matrix, matrix, positionDelta);
-    });
-    this.updateInstanceMatrices();
-    // mat4.translate(this.transformMatrix, this.transformMatrix, positionDelta);
+    this.applyPhysics(time);
 
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
@@ -98,5 +80,43 @@ export class CubeInstances extends Entity {
       this.instancesMatrices.byteOffset,
       this.instancesMatrices.byteLength
     );
+  };
+
+  applyPhysics = (time: number) => {
+    const seconds = time / 1000;
+    const timeDelta = seconds - this.lastTime;
+
+    // in the first iteration timeDelta is too large
+    // the cube would start with a noticeable offset
+    // so we just store the time and exit
+    if (!this.lastTime) {
+      this.lastTime = seconds;
+      return;
+    }
+
+    // update velocity based on gravity
+    const velocityDelta = vec3.create();
+    const gravity = -0.0008;
+    vec3.scale(velocityDelta, vec3.fromValues(0, 1, 0), gravity * timeDelta);
+    vec3.add(this.velocity, this.velocity, velocityDelta);
+
+    // update position based on velocity
+    const positionDelta = vec3.create();
+    vec3.scale(positionDelta, this.velocity, timeDelta);
+
+    this.matrices.forEach((matrix) => {
+      mat4.translate(matrix, matrix, positionDelta);
+
+      const boundY = 2;
+      if (matrix[13] < -boundY) {
+        matrix[13] = -boundY;
+
+        if (this.velocity[1] < 0) {
+          this.velocity[1] *= -1;
+        }
+      }
+    });
+
+    this.updateInstanceMatrices();
   };
 }
