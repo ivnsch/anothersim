@@ -26,9 +26,6 @@ export class Sim {
 
   entities: Entity[] = [];
 
-  identityBuffer: GPUBuffer | null = null;
-  identity: mat4;
-
   depthStencilResources: DepthBufferResources | null = null;
 
   constructor(canvas: HTMLCanvasElement, cameraPos: vec3) {
@@ -37,9 +34,6 @@ export class Sim {
 
     this.projection = createProjectionMatrix();
     this.camera = new Camera(cameraPos);
-
-    this.identity = mat4.create();
-    mat4.identity(this.identity);
   }
 
   init = async (navigator: Navigator) => {
@@ -95,12 +89,6 @@ export class Sim {
     this.projectionBuffer = createMatrixUniformBuffer(device);
     this.camera.buffer = createMatrixUniformBuffer(device);
 
-    this.identityBuffer = device.createBuffer({
-      label: "identity buffer",
-      size: 64, // 4 x 4 matrix x 4 bytes per float
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
     const bindGroupLayout = createBindGroupLayout(this.device);
 
     // bind groups
@@ -117,7 +105,6 @@ export class Sim {
       cameraBuffer: this.camera.buffer!,
       xAxisLines: xAxisLines,
       zAxisLines: zAxisLines,
-      identityBuffer: this.identityBuffer!,
       yAxis: yAxis,
     };
 
@@ -170,8 +157,7 @@ export class Sim {
         this.device &&
         this.renderPassDescriptor &&
         this.pipeline &&
-        this.projectionBuffer &&
-        this.identityBuffer
+        this.projectionBuffer
       )
     ) {
       console.log("missing deps, can't render");
@@ -186,9 +172,7 @@ export class Sim {
       this.entities,
       this.projectionBuffer,
       this.projection,
-      this.camera,
-      this.identityBuffer,
-      this.identity
+      this.camera
     );
   };
 
@@ -212,10 +196,7 @@ const render = (
 
   projectionBuffer: GPUBuffer,
   projection: mat4,
-  camera: Camera,
-
-  identityBuffer: GPUBuffer,
-  identityMatrix: mat4
+  camera: Camera
 ) => {
   camera.update();
 
@@ -235,7 +216,6 @@ const render = (
 
   device.queue.writeBuffer(projectionBuffer, 0, <ArrayBuffer>projection);
   device.queue.writeBuffer(camera.buffer, 0, <ArrayBuffer>camera.matrix());
-  device.queue.writeBuffer(identityBuffer, 0, <ArrayBuffer>identityMatrix);
 };
 
 const createRenderPassDescriptor = (
@@ -269,7 +249,6 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 8, visibility: GPUShaderStage.VERTEX, buffer: {} },
-      { binding: 9, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };
@@ -284,27 +263,6 @@ export type BindGroupDeps = {
   cubeDensityInstances: CubeDensityInstances;
   cameraBuffer: GPUBuffer;
   projectionBuffer: GPUBuffer;
-  identityBuffer: GPUBuffer;
-};
-
-const createBindGroupWithDeps = (
-  deps: BindGroupDeps,
-  label: string,
-  meshTypeBuffer: GPUBuffer
-): GPUBindGroup => {
-  return createBindGroup(
-    label,
-    deps.device,
-    deps.bindGroupLayout,
-    deps.cubeInstances,
-    deps.cubeDensityInstances,
-    deps.projectionBuffer,
-    deps.cameraBuffer,
-    meshTypeBuffer,
-    deps.xAxisLines,
-    deps.zAxisLines,
-    deps.identityBuffer
-  );
 };
 
 export const createBindGroup = (
@@ -317,8 +275,7 @@ export const createBindGroup = (
   cameraBuffer: GPUBuffer,
   meshTypeBuffer: GPUBuffer,
   xAxisLines: AxisLines,
-  zAxisLines: AxisLines,
-  identityBuffer: GPUBuffer
+  zAxisLines: AxisLines
 ): GPUBindGroup => {
   return device.createBindGroup({
     label: label,
@@ -329,14 +286,13 @@ export const createBindGroup = (
       { binding: 2, resource: { buffer: meshTypeBuffer } },
       { binding: 3, resource: { buffer: xAxisLines.instancesBuffer } },
       { binding: 4, resource: { buffer: zAxisLines.instancesBuffer } },
-      { binding: 5, resource: { buffer: identityBuffer } },
-      { binding: 6, resource: { buffer: cubeInstances.instancesBuffer } },
-      { binding: 7, resource: { buffer: cubeInstances.colorsBuffer } },
+      { binding: 5, resource: { buffer: cubeInstances.instancesBuffer } },
+      { binding: 6, resource: { buffer: cubeInstances.colorsBuffer } },
       {
-        binding: 8,
+        binding: 7,
         resource: { buffer: cubeDensityInstances.instancesBuffer },
       },
-      { binding: 9, resource: { buffer: cubeDensityInstances.colorsBuffer } },
+      { binding: 8, resource: { buffer: cubeDensityInstances.colorsBuffer } },
     ],
   });
 };
