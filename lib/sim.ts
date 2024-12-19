@@ -114,74 +114,47 @@ export class Sim {
     // the approach itself feels slightly weird, but it works..
     // also ideally it should be initialized in the respective entities? but too many dependencies..
 
-    cubeInstances.bindGroup = createBindGroup(
+    const bindGroupDeps = {
+      device: this.device,
+      bindGroupLayout: bindGroupLayout,
+      cubeInstances: cubeInstances,
+      cubeDensityInstances: cubeDensityInstances,
+      projectionBuffer: this.projectionBuffer!,
+      cameraBuffer: this.camera.buffer!,
+      xAxisLines: xAxisLines,
+      zAxisLines: zAxisLines,
+      identityBuffer: this.identityBuffer!,
+      yAxis: yAxis,
+    };
+
+    cubeInstances.bindGroup = createBindGroupWithDeps(
+      bindGroupDeps,
       "cube instances bind group",
-      this.device,
-      bindGroupLayout,
-      cubeInstances,
-      cubeDensityInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      cubeInstances.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
+      cubeInstances.meshTypeBuffer!
     );
 
-    xAxisLines.bindGroup = createBindGroup(
+    xAxisLines.bindGroup = createBindGroupWithDeps(
+      bindGroupDeps,
       "x axis bind group (new)",
-      this.device,
-      bindGroupLayout,
-      cubeInstances,
-      cubeDensityInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      xAxisLines.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
+      xAxisLines.meshTypeBuffer!
     );
 
-    yAxis.bindGroup = createBindGroup(
+    yAxis.bindGroup = createBindGroupWithDeps(
+      bindGroupDeps,
       "y axis bind group",
-      this.device,
-      bindGroupLayout,
-      cubeInstances,
-      cubeDensityInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      yAxis.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
+      yAxis.meshTypeBuffer!
     );
 
-    zAxisLines.bindGroup = createBindGroup(
+    zAxisLines.bindGroup = createBindGroupWithDeps(
+      bindGroupDeps,
       "z axis bind group (new)",
-      this.device,
-      bindGroupLayout,
-      cubeInstances,
-      cubeDensityInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      zAxisLines.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
+      zAxisLines.meshTypeBuffer!
     );
 
-    cubeDensityInstances.bindGroup = createBindGroup(
+    cubeDensityInstances.bindGroup = createBindGroupWithDeps(
+      bindGroupDeps,
       "cube density instances bind group",
-      this.device,
-      bindGroupLayout,
-      cubeInstances,
-      cubeDensityInstances,
-      this.projectionBuffer,
-      this.camera.buffer,
-      cubeDensityInstances.meshTypeBuffer,
-      xAxisLines,
-      zAxisLines,
-      this.identityBuffer
+      cubeDensityInstances.meshTypeBuffer!
     );
 
     this.depthStencilResources = makeDepthBufferResources(device);
@@ -326,6 +299,39 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 9, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
+};
+
+type BindGroupDeps = {
+  device: GPUDevice;
+  bindGroupLayout: GPUBindGroupLayout;
+  yAxis: Axis;
+  xAxisLines: AxisLines;
+  zAxisLines: AxisLines;
+  cubeInstances: CubeInstances;
+  cubeDensityInstances: CubeDensityInstances;
+  cameraBuffer: GPUBuffer;
+  projectionBuffer: GPUBuffer;
+  identityBuffer: GPUBuffer;
+};
+
+const createBindGroupWithDeps = (
+  deps: BindGroupDeps,
+  label: string,
+  meshTypeBuffer: GPUBuffer
+): GPUBindGroup => {
+  return createBindGroup(
+    label,
+    deps.device,
+    deps.bindGroupLayout,
+    deps.cubeInstances,
+    deps.cubeDensityInstances,
+    deps.projectionBuffer,
+    deps.cameraBuffer,
+    meshTypeBuffer,
+    deps.xAxisLines,
+    deps.zAxisLines,
+    deps.identityBuffer
+  );
 };
 
 const createBindGroup = (
