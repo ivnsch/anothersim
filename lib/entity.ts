@@ -121,6 +121,10 @@ export class Entity {
   setPosition = (pos: vec3) => {
     mat4.translate(this.transformMatrix, this.transformMatrix, pos);
   };
+
+  setScale = (scale: vec3) => {
+    mat4.scale(this.transformMatrix, this.transformMatrix, scale);
+  };
 }
 
 const createMeshTypeBuffer = (device: GPUDevice, id: number): GPUBuffer => {

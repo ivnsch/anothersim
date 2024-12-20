@@ -1,3 +1,4 @@
+import { vec3 } from "gl-matrix";
 import { Entity } from "./entity";
 import { ParsedObjFile } from "./obj_parser";
 
@@ -25,6 +26,8 @@ export class ObjFileEntity extends Entity {
       size: indices.length * 4, // indices * 4 bytes per float
       usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
     });
+
+    this.setScale(vec3.fromValues(1.5, 1, 1));
   }
 
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
