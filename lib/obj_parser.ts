@@ -23,8 +23,6 @@ export function parseObjFile(objText: string): ParsedObjFile {
     }
   }
 
-  indices.reverse();
-
   return { vertices, indices };
 }
 
