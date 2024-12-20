@@ -13,7 +13,8 @@ export default function Home() {
   useEffect(() => {
     const nested = async () => {
       if (canvasRef.current) {
-        fetch("/models/cube.obj")
+        // fetch("/models/cube.obj")
+        fetch("/models/sphere.obj")
           .then((res) => res.text())
           .then(async (text) => {
             const parsedObj = parseObjFile(text);
