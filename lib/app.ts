@@ -18,14 +18,14 @@ export class App {
 
   constructor(
     document: Document,
-    canvas: HTMLCanvasElement,
-    parsedObj: ParsedObjFile
+    canvas: HTMLCanvasElement
+    // parsedObj: ParsedObjFile
   ) {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
     // this.sim = new Sim(canvas, parsedObj);
-    this.sim = new Sim2d(canvas, parsedObj);
+    this.sim = new Sim2d(canvas);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);

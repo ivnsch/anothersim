@@ -28,18 +28,15 @@ export class Sim2d {
 
   entities: Entity[] = [];
 
-  objFile: ParsedObjFile;
-
   colorBuffer: ColorBuffer | null = null;
   sampler: GPUSampler | null = null;
 
   computeBindGroup: GPUBindGroup | null = null;
   renderBindGroup: GPUBindGroup | null = null;
 
-  constructor(canvas: HTMLCanvasElement, objFile: ParsedObjFile) {
+  constructor(canvas: HTMLCanvasElement) {
     this.presentationFormat = "bgra8unorm";
     this.context = <GPUCanvasContext>canvas.getContext("webgpu");
-    this.objFile = objFile;
   }
 
   init = async (navigator: Navigator, cameraPos: vec3) => {

@@ -19,7 +19,8 @@ export default function Home() {
           .then(async (text) => {
             const parsedObj = parseObjFile(text);
             if (canvasRef.current) {
-              const app = new App(document, canvasRef.current, parsedObj);
+              const app = new App(document, canvasRef.current);
+              //   const app = new App(document, canvasRef.current, parsedObj);
               await app.init(navigator);
               app.run(performance.now());
             } else {
