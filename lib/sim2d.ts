@@ -91,20 +91,6 @@ export class Sim2d {
     );
   };
 
-  private createCurrentTextureView = (): GPUTextureView => {
-    return this.context.getCurrentTexture().createView();
-  };
-
-  private initRenderPassDescriptor = (
-    depthStencilAttachment: GPURenderPassDepthStencilAttachment
-  ) => {
-    const descriptor = createRenderPassDescriptor(
-      this.createCurrentTextureView(),
-      depthStencilAttachment
-    );
-    this.renderPassDescriptor = descriptor;
-  };
-
   render = (time: number) => {
     if (
       !(
@@ -187,24 +173,6 @@ const render = (
     projection.matrix as Float32Array
   );
   device.queue.writeBuffer(camera.buffer, 0, camera.matrix() as Float32Array);
-};
-
-const createRenderPassDescriptor = (
-  view: GPUTextureView,
-  depthStencilAttachment: GPURenderPassDepthStencilAttachment
-): GPURenderPassDescriptor => {
-  return {
-    label: "our basic canvas renderPass",
-    colorAttachments: [
-      {
-        view: view,
-        clearValue: [0.3, 0.3, 0.3, 1],
-        loadOp: "clear",
-        storeOp: "store",
-      },
-    ],
-    depthStencilAttachment: depthStencilAttachment,
-  };
 };
 
 const createRenderBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
