@@ -1,16 +1,16 @@
 import { vec3 } from "gl-matrix";
+import { Axis } from "./axis";
 import { AxisLines } from "./axis_lines";
 import { Camera } from "./camera";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants";
-import my_screen_shader from "./shaders/vertex_frag.wgsl";
-import my_compute_shader from "./shaders/compute.wgsl";
-import { Axis } from "./axis";
-import { Entity } from "./entity";
-import { CubeInstances } from "./cube_instances";
 import { CubeDensityInstances } from "./cube_density_instances";
-import { Projection } from "./projection";
+import { CubeInstances } from "./cube_instances";
+import { Entity } from "./entity";
 import { ObjFileEntity } from "./obj_file_entity";
 import { ParsedObjFile } from "./obj_parser";
+import { Projection } from "./projection";
+import my_compute_shader from "./shaders/compute.wgsl";
+import my_screen_shader from "./shaders/vertex_frag.wgsl";
 
 export class Sim2d {
   adapter: GPUAdapter | null = null;
@@ -28,12 +28,13 @@ export class Sim2d {
 
   entities: Entity[] = [];
 
-  bindGroupDeps: BindGroupDeps | null = null;
-
   objFile: ParsedObjFile;
 
   colorBuffer: ColorBuffer | null = null;
   sampler: GPUSampler | null = null;
+
+  computeBindGroup: GPUBindGroup | null = null;
+  renderBindGroup: GPUBindGroup | null = null;
 
   constructor(canvas: HTMLCanvasElement, objFile: ParsedObjFile) {
     this.presentationFormat = "bgra8unorm";
@@ -64,8 +65,10 @@ export class Sim2d {
     const camera = new Camera(device, cameraPos);
     this.camera = camera;
 
-    this.colorBuffer = initColorBuffer(device);
-    this.sampler = createSampler(device);
+    const colorBuffer = initColorBuffer(device);
+    this.colorBuffer = colorBuffer;
+    const sampler = createSampler(device);
+    this.sampler = sampler;
 
     this.entities = [];
 
@@ -77,6 +80,12 @@ export class Sim2d {
     this.camera.buffer = createMatrixUniformBuffer(device);
 
     const renderBindGroupLayout = createRenderBindGroupLayout(this.device);
+    this.renderBindGroup = createRenderBindGroup(
+      renderBindGroupLayout,
+      device,
+      sampler,
+      colorBuffer
+    );
     this.renderPipeline = createRenderPipeline(
       my_screen_shader,
       device,
@@ -84,10 +93,16 @@ export class Sim2d {
       renderBindGroupLayout
     );
 
+    const computeBindGroupLayout = createComputeBindGroupLayout(device);
+    this.computeBindGroup = createComputeBindGroup(
+      computeBindGroupLayout,
+      device,
+      this.colorBuffer
+    );
     this.computePipeline = createComputePipeline(
       my_compute_shader,
       device,
-      createComputeBindGroupLayout(device)
+      computeBindGroupLayout
     );
   };
 
@@ -96,7 +111,10 @@ export class Sim2d {
       !(
         this.device &&
         this.context &&
+        this.computePipeline &&
+        this.computeBindGroup &&
         this.renderPipeline &&
+        this.renderBindGroup &&
         this.projection &&
         this.camera
       )
@@ -109,7 +127,10 @@ export class Sim2d {
       time,
       this.device,
       this.context,
+      this.computePipeline,
+      this.computeBindGroup,
       this.renderPipeline,
+      this.renderBindGroup,
       this.entities,
       this.projection,
       this.camera
@@ -135,17 +156,67 @@ const render = (
   time: number,
   device: GPUDevice,
   context: GPUCanvasContext,
-  pipeline: GPURenderPipeline,
+  computePipeline: GPUComputePipeline,
+  computeBindGroup: GPUBindGroup,
+  renderPipeline: GPURenderPipeline,
+  renderBindGroup: GPUBindGroup,
   entities: Entity[],
   projection: Projection,
   camera: Camera
 ) => {
   camera.update();
 
-  const encoder = device.createCommandEncoder({ label: "our encoder" });
+  const commandEncoder: GPUCommandEncoder = device.createCommandEncoder();
 
+  computePass(commandEncoder, computePipeline, computeBindGroup);
+  renderPass(
+    time,
+    device,
+    commandEncoder,
+    renderPipeline,
+    renderBindGroup,
+    context,
+    entities
+  );
+
+  const commandBuffer = commandEncoder.finish();
+  device.queue.submit([commandBuffer]);
+
+  device.queue.writeBuffer(
+    projection.buffer,
+    0,
+    projection.matrix as Float32Array
+  );
+  device.queue.writeBuffer(camera.buffer, 0, camera.matrix() as Float32Array);
+};
+
+const computePass = (
+  commandEncoder: GPUCommandEncoder,
+  computePipeline: GPUComputePipeline,
+  computeBindGroup: GPUBindGroup
+) => {
+  const computePass = commandEncoder.beginComputePass();
+  computePass.setPipeline(computePipeline);
+  computePass.setBindGroup(0, computeBindGroup);
+  computePass.dispatchWorkgroups(
+    Math.floor((CANVAS_WIDTH + 7) / 8),
+    Math.floor((CANVAS_HEIGHT + 7) / 8),
+    1
+  );
+  computePass.end();
+};
+
+const renderPass = (
+  time: number,
+  device: GPUDevice,
+  commandEncoder: GPUCommandEncoder,
+  renderPipeline: GPURenderPipeline,
+  renderBindGroup: GPUBindGroup,
+  context: GPUCanvasContext,
+  entities: Entity[]
+) => {
   const textureView: GPUTextureView = context.getCurrentTexture().createView();
-  const pass = encoder.beginRenderPass({
+  const renderPass = commandEncoder.beginRenderPass({
     colorAttachments: [
       {
         view: textureView,
@@ -155,24 +226,13 @@ const render = (
       },
     ],
   });
-
-  pass.setPipeline(pipeline);
-
+  renderPass.setPipeline(renderPipeline);
+  renderPass.setBindGroup(0, renderBindGroup);
+  renderPass.draw(6, 1, 0, 0);
   entities.forEach((entity) => {
-    entity.render(device, pass, time);
+    entity.render(device, renderPass, time);
   });
-
-  pass.end();
-
-  const commandBuffer = encoder.finish();
-  device.queue.submit([commandBuffer]);
-
-  device.queue.writeBuffer(
-    projection.buffer,
-    0,
-    projection.matrix as Float32Array
-  );
-  device.queue.writeBuffer(camera.buffer, 0, camera.matrix() as Float32Array);
+  renderPass.end();
 };
 
 const createRenderBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
@@ -188,11 +248,6 @@ const createRenderBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
         binding: 1,
         visibility: GPUShaderStage.FRAGMENT,
         texture: {},
-      },
-      {
-        binding: 2,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: {},
       },
     ],
   });
@@ -323,4 +378,41 @@ const createSampler = (device: GPUDevice): GPUSampler => {
     maxAnisotropy: 1,
   };
   return device.createSampler(samplerDescriptor);
+};
+
+const createComputeBindGroup = (
+  layout: GPUBindGroupLayout,
+  device: GPUDevice,
+  colorBuffer: ColorBuffer
+): GPUBindGroup => {
+  return device.createBindGroup({
+    layout: layout,
+    entries: [
+      {
+        binding: 0,
+        resource: colorBuffer.view,
+      },
+    ],
+  });
+};
+
+const createRenderBindGroup = (
+  layout: GPUBindGroupLayout,
+  device: GPUDevice,
+  sampler: GPUSampler,
+  colorBuffer: ColorBuffer
+): GPUBindGroup => {
+  return device.createBindGroup({
+    layout: layout,
+    entries: [
+      {
+        binding: 0,
+        resource: sampler,
+      },
+      {
+        binding: 1,
+        resource: colorBuffer.view,
+      },
+    ],
+  });
 };
