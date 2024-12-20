@@ -64,7 +64,8 @@ export class Entity {
       deps.cameraBuffer,
       this.meshTypeBuffer!,
       deps.xAxisLines,
-      deps.zAxisLines
+      deps.zAxisLines,
+      deps.objFile
     );
     this.bindGroup = bindGroup;
   };

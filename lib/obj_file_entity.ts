@@ -36,5 +36,11 @@ export class ObjFileEntity extends Entity {
 
     device.queue.writeBuffer(this.vertexBuffer, 0, this.vertices);
     device.queue.writeBuffer(this.indexBuffer, 0, this.indices);
+
+    device.queue.writeBuffer(
+      this.transformBuffer,
+      0,
+      this.transformMatrix as Float32Array
+    );
   };
 }

@@ -13,6 +13,7 @@ struct OurVertexShaderOutput {
 @binding(6) @group(0) var<uniform> cube_color_map: array<vec4<f32>, 100>;
 @binding(7) @group(0) var<uniform> cube_density_transforms: array<mat4x4f, 1000>;
 @binding(8) @group(0) var<uniform> cube_density_color_map: array<vec4<f32>, 1000>;
+@binding(9) @group(0) var<uniform> file_obj_transform: mat4x4<f32>;
 
 @vertex
 fn vs_main(
@@ -44,6 +45,7 @@ fn vs_main(
         transformed = cube_density_transforms[instance_idx] * vertex_4;
         output.color = cube_density_color_map[instance_idx];
     } else if (meshType == 5) {
+        transformed = file_obj_transform * vertex_4;
         output.color = vec4<f32>(0.5, 1.0, 0.5, 0.0); // light green 
     } else { // unexpected
         output.color = vec4<f32>(0.0, 0.0, 0.0, 0.0); // black

@@ -115,8 +115,8 @@ export class Sim {
       xAxisLines: xAxisLines,
       zAxisLines: zAxisLines,
       yAxis: yAxis,
+      objFile: fileObj,
     };
-    // this.bindGroupDeps = bindGroupDeps;
 
     cubeInstances.initBindGroup(bindGroupDeps, "cube instances bind group");
     xAxisLines.initBindGroup(bindGroupDeps, "x axis bind group");
@@ -266,6 +266,7 @@ const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
       { binding: 6, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 7, visibility: GPUShaderStage.VERTEX, buffer: {} },
       { binding: 8, visibility: GPUShaderStage.VERTEX, buffer: {} },
+      { binding: 9, visibility: GPUShaderStage.VERTEX, buffer: {} },
     ],
   });
 };
@@ -280,7 +281,7 @@ export type BindGroupDeps = {
   cubeDensityInstances: CubeDensityInstances;
   cameraBuffer: GPUBuffer;
   projection: Projection;
-  //   objFile: ParsedObjFile;
+  objFile: ObjFileEntity;
 };
 
 export const createBindGroup = (
@@ -293,8 +294,8 @@ export const createBindGroup = (
   cameraBuffer: GPUBuffer,
   meshTypeBuffer: GPUBuffer,
   xAxisLines: AxisLines,
-  zAxisLines: AxisLines
-  //   objFile: ParsedObjFile
+  zAxisLines: AxisLines,
+  objFile: ObjFileEntity
 ): GPUBindGroup => {
   return device.createBindGroup({
     label: label,
@@ -312,6 +313,7 @@ export const createBindGroup = (
         resource: { buffer: cubeDensityInstances.instancesBuffer },
       },
       { binding: 8, resource: { buffer: cubeDensityInstances.colorsBuffer } },
+      { binding: 9, resource: { buffer: objFile.transformBuffer } },
     ],
   });
 };
