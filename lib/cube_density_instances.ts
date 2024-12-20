@@ -41,30 +41,31 @@ export class CubeDensityInstances extends Entity {
   }
 
   private initInstances = () => {
-    var index = 0;
-
-    const hs = this.spacing / 2; // half spacing
-
     for (let x = 0; x < this.spacing; x++) {
       for (let y = 0; y < this.spacing; y++) {
         for (let z = 0; z < this.spacing; z++) {
-          const m = mat4.create();
-          mat4.identity(m);
-          // add at grid position
-          const v = vec3.fromValues(x - hs, y - hs, z - hs);
-          mat4.translate(m, m, v);
-          // scale cubes down
-          const scale = 0.1;
-          const scaleV = vec3.fromValues(scale, scale, scale);
-          mat4.scale(m, m, scaleV);
-          // add transform matrix
-          this.matrices.push(m);
-          this.velocities.push(vec3.create());
-          index++;
+          this.initInstance(x, y, z);
         }
       }
     }
     this.updateInstanceMatrices();
+  };
+
+  initInstance = (x: number, y: number, z: number) => {
+    const hs = this.spacing / 2; // half spacing
+
+    const m = mat4.create();
+    mat4.identity(m);
+    // add at grid position
+    const v = vec3.fromValues(x - hs, y - hs, z - hs);
+    mat4.translate(m, m, v);
+    // scale cubes down
+    const scale = 0.1;
+    const scaleV = vec3.fromValues(scale, scale, scale);
+    mat4.scale(m, m, scaleV);
+    // add transform matrix
+    this.matrices.push(m);
+    this.velocities.push(vec3.create());
   };
 
   initColors = () => {
@@ -72,16 +73,18 @@ export class CubeDensityInstances extends Entity {
     for (let x = 0; x < this.spacing; x++) {
       for (let y = 0; y < this.spacing; y++) {
         for (let z = 0; z < this.spacing; z++) {
-          const density = calcDensity(
-            vec3.fromValues(x, y, z),
-            this.cubePositions
-          );
-          const color = colorForDensity(density);
-          this.instancesColors.set(color, this.colorVectorFloatCount * index);
+          this.initColor(x, y, z, index);
           index++;
         }
       }
     }
+  };
+
+  initColor = (x: number, y: number, z: number, index: number) => {
+    const density = calcDensity(vec3.fromValues(x, y, z), this.cubePositions);
+    const color = colorForDensity(density);
+    this.instancesColors.set(color, this.colorVectorFloatCount * index);
+    index++;
   };
 
   // updates instance matrices to match matrices
