@@ -1,9 +1,11 @@
 import { vec3 } from "gl-matrix";
 import { Sim, origin } from "./sim";
 import { ParsedObjFile } from "./obj_parser";
+import { Sim2d } from "./sim2d";
 
 export class App {
-  sim: Sim;
+  //   sim: Sim;
+  sim: Sim2d;
 
   objPitch: number = 0;
   objYaw: number = 0;
@@ -22,7 +24,8 @@ export class App {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
-    this.sim = new Sim(canvas, parsedObj);
+    // this.sim = new Sim(canvas, parsedObj);
+    this.sim = new Sim2d(canvas, parsedObj);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);
