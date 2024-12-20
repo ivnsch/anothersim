@@ -97,7 +97,9 @@ export class Sim2d {
     this.computeBindGroup = createComputeBindGroup(
       computeBindGroupLayout,
       device,
-      this.colorBuffer
+      this.colorBuffer,
+      camera,
+      projection
     );
     this.computePipeline = createComputePipeline(
       my_compute_shader,
@@ -268,6 +270,16 @@ const createComputeBindGroupLayout = (
           viewDimension: "2d",
         },
       },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: {},
+      },
+      {
+        binding: 2,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: {},
+      },
     ],
   });
 };
@@ -383,7 +395,9 @@ const createSampler = (device: GPUDevice): GPUSampler => {
 const createComputeBindGroup = (
   layout: GPUBindGroupLayout,
   device: GPUDevice,
-  colorBuffer: ColorBuffer
+  colorBuffer: ColorBuffer,
+  camera: Camera,
+  projection: Projection
 ): GPUBindGroup => {
   return device.createBindGroup({
     layout: layout,
@@ -391,6 +405,18 @@ const createComputeBindGroup = (
       {
         binding: 0,
         resource: colorBuffer.view,
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: projection.buffer,
+        },
+      },
+      {
+        binding: 2,
+        resource: {
+          buffer: camera.buffer,
+        },
       },
     ],
   });

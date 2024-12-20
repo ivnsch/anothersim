@@ -1,4 +1,6 @@
 @group(0) @binding(0) var color_buffer: texture_storage_2d<rgba8unorm, write>;
+@group(0) @binding(1) var<uniform> projection: mat4x4<f32>;
+@group(0) @binding(2) var<uniform> camera: mat4x4<f32>;
 
 @compute @workgroup_size(8,8,1)
 fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
