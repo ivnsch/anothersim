@@ -9,6 +9,8 @@ import { Entity } from "./entity";
 import { CubeInstances } from "./cube_instances";
 import { CubeDensityInstances } from "./cube_density_instances";
 import { Projection } from "./projection";
+import { ObjFileEntity } from "./obj_file_entity";
+import { ParsedObjFile } from "./obj_parser";
 
 export class Sim {
   adapter: GPUAdapter | null = null;
@@ -27,9 +29,14 @@ export class Sim {
 
   depthStencilResources: DepthBufferResources | null = null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  bindGroupDeps: BindGroupDeps | null = null;
+
+  objFile: ParsedObjFile;
+
+  constructor(canvas: HTMLCanvasElement, objFile: ParsedObjFile) {
     this.presentationFormat = "bgra8unorm";
     this.context = <GPUCanvasContext>canvas.getContext("webgpu");
+    this.objFile = objFile;
   }
 
   init = async (navigator: Navigator, cameraPos: vec3) => {
@@ -77,6 +84,8 @@ export class Sim {
       cubePositions,
       4
     );
+    const fileObj = new ObjFileEntity(this.device, this.objFile, 5);
+    this.entities.push(fileObj);
 
     this.entities = [
       yAxis,
@@ -84,6 +93,7 @@ export class Sim {
       zAxisLines,
       cubeInstances,
       cubeDensityInstances,
+      fileObj,
     ];
 
     this.context.configure({
@@ -96,16 +106,17 @@ export class Sim {
     const bindGroupLayout = createBindGroupLayout(this.device);
 
     const bindGroupDeps = {
-      device: this.device,
+      device: device,
       bindGroupLayout: bindGroupLayout,
       cubeInstances: cubeInstances,
       cubeDensityInstances: cubeDensityInstances,
       projection: projection,
-      cameraBuffer: this.camera.buffer!,
+      cameraBuffer: camera.buffer,
       xAxisLines: xAxisLines,
       zAxisLines: zAxisLines,
       yAxis: yAxis,
     };
+    // this.bindGroupDeps = bindGroupDeps;
 
     cubeInstances.initBindGroup(bindGroupDeps, "cube instances bind group");
     xAxisLines.initBindGroup(bindGroupDeps, "x axis bind group");
@@ -115,6 +126,7 @@ export class Sim {
       bindGroupDeps,
       "cube density instances bind group"
     );
+    fileObj.initBindGroup(bindGroupDeps, "obj file instances bind group");
 
     this.depthStencilResources = makeDepthBufferResources(device);
 
@@ -268,6 +280,7 @@ export type BindGroupDeps = {
   cubeDensityInstances: CubeDensityInstances;
   cameraBuffer: GPUBuffer;
   projection: Projection;
+  //   objFile: ParsedObjFile;
 };
 
 export const createBindGroup = (
@@ -281,6 +294,7 @@ export const createBindGroup = (
   meshTypeBuffer: GPUBuffer,
   xAxisLines: AxisLines,
   zAxisLines: AxisLines
+  //   objFile: ParsedObjFile
 ): GPUBindGroup => {
   return device.createBindGroup({
     label: label,
@@ -329,6 +343,7 @@ const createPipeline = (
     },
     primitive: {
       topology: "triangle-list",
+      cullMode: "none", // No face culling
     },
     depthStencil: depthStencilState,
   });

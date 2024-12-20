@@ -1,5 +1,6 @@
 import { vec3 } from "gl-matrix";
 import { Sim, origin } from "./sim";
+import { ParsedObjFile } from "./obj_parser";
 
 export class App {
   sim: Sim;
@@ -13,11 +14,15 @@ export class App {
   cameraRoll: number = 0;
   cameraPos: vec3 = vec3.create();
 
-  constructor(document: Document, canvas: HTMLCanvasElement) {
+  constructor(
+    document: Document,
+    canvas: HTMLCanvasElement,
+    parsedObj: ParsedObjFile
+  ) {
     this.cameraPos = origin();
     this.cameraPos[2] += 4;
 
-    this.sim = new Sim(canvas);
+    this.sim = new Sim(canvas, parsedObj);
 
     document.addEventListener("keydown", (e) => {
       this.handleKeypress(e);
@@ -30,7 +35,7 @@ export class App {
 
   handleKeypress(event: any) {
     const deltaObj = 0.05;
-    const deltaCameraRot = 2;
+    const deltaCameraRot = 4;
     const deltaCameraTrans = 0.3;
     if (event.code == "KeyX") {
       this.objPitch += deltaObj;
@@ -72,6 +77,10 @@ export class App {
     this.sim.setCameraEulers(this.cameraPitch, this.cameraYaw, this.cameraRoll);
     this.sim.setCameraTranslation(this.cameraPos);
   }
+
+  //   addParsedObj = (parsedObj: ParsedObjFile) => {
+  //     this.sim.addParsedObj(parsedObj);
+  //   };
 
   run = (time: number) => {
     this.sim.render(time);

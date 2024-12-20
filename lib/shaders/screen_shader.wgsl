@@ -43,6 +43,8 @@ fn vs_main(
     } else if (meshType == 4) { // cube density instances
         transformed = cube_density_transforms[instance_idx] * vertex_4;
         output.color = cube_density_color_map[instance_idx];
+    } else if (meshType == 5) {
+        output.color = vec4<f32>(0.5, 1.0, 0.5, 0.0); // light green 
     } else { // unexpected
         output.color = vec4<f32>(0.0, 0.0, 0.0, 0.0); // black
     }

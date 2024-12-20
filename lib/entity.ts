@@ -41,12 +41,6 @@ export class Entity {
 
   initialize = () => {};
 
-  initMeshType = (device: GPUDevice, id: number) => {
-    this.meshTypeBuffer = createMeshTypeUniformBuffer(device);
-    new Uint32Array(this.meshTypeBuffer.getMappedRange()).set([id]);
-    this.meshTypeBuffer.unmap();
-  };
-
   render = (device: GPUDevice, pass: GPURenderPassEncoder, time: number) => {
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.buffer);
