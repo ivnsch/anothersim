@@ -11,6 +11,7 @@ import { ParsedObjFile } from "./obj_parser";
 import { Projection } from "./projection";
 import my_compute_shader from "./shaders/compute.wgsl";
 import my_screen_shader from "./shaders/vertex_frag.wgsl";
+import points_shader from "./shaders/points_render_shader.wgsl";
 import { DensityLayer } from "./density_layer";
 
 export class Sim2d {
@@ -19,8 +20,10 @@ export class Sim2d {
   context: GPUCanvasContext;
 
   presentationFormat: GPUTextureFormat;
+
   renderPipeline: GPURenderPipeline | null = null;
   computePipeline: GPUComputePipeline | null = null;
+  renderPointsPipeline: GPURenderPipeline | null = null;
 
   renderPassDescriptor: GPURenderPassDescriptor | null = null;
 
@@ -34,6 +37,7 @@ export class Sim2d {
 
   computeBindGroup: GPUBindGroup | null = null;
   renderBindGroup: GPUBindGroup | null = null;
+  renderPointsBindGroup: GPUBindGroup | null = null;
 
   densityLayer: DensityLayer | null = null;
 
@@ -120,6 +124,21 @@ export class Sim2d {
       device,
       computeBindGroupLayout
     );
+
+    const renderPointsBindGroupLayout = createRenderPointsBindGroupLayout(
+      this.device
+    );
+    this.renderPointsBindGroup = createRenderPointsBindGroup(
+      renderPointsBindGroupLayout,
+      device,
+      densityLayer.pointsBuffer
+    );
+    this.renderPointsPipeline = createRenderPointsPipeline(
+      points_shader,
+      device,
+      this.presentationFormat,
+      renderPointsBindGroupLayout
+    );
   };
 
   render = (time: number) => {
@@ -131,6 +150,8 @@ export class Sim2d {
         this.computeBindGroup &&
         this.renderPipeline &&
         this.renderBindGroup &&
+        this.renderPointsPipeline &&
+        this.renderPointsBindGroup &&
         this.projection &&
         this.camera
       )
@@ -147,6 +168,8 @@ export class Sim2d {
       this.computeBindGroup,
       this.renderPipeline,
       this.renderBindGroup,
+      this.renderPointsPipeline,
+      this.renderPointsBindGroup,
       this.entities,
       this.projection,
       this.camera
@@ -176,6 +199,8 @@ const render = (
   computeBindGroup: GPUBindGroup,
   renderPipeline: GPURenderPipeline,
   renderBindGroup: GPUBindGroup,
+  renderPointsPipeline: GPURenderPipeline,
+  renderPointsBindGroup: GPUBindGroup,
   entities: Entity[],
   projection: Projection,
   camera: Camera
@@ -191,6 +216,15 @@ const render = (
     commandEncoder,
     renderPipeline,
     renderBindGroup,
+    context,
+    entities
+  );
+  renderPointsPass(
+    time,
+    device,
+    commandEncoder,
+    renderPointsPipeline,
+    renderPointsBindGroup,
     context,
     entities
   );
@@ -245,6 +279,34 @@ const renderPass = (
   renderPass.setPipeline(renderPipeline);
   renderPass.setBindGroup(0, renderBindGroup);
   renderPass.draw(6, 1, 0, 0);
+  entities.forEach((entity) => {
+    entity.render(device, renderPass, time);
+  });
+  renderPass.end();
+};
+
+const renderPointsPass = (
+  time: number,
+  device: GPUDevice,
+  commandEncoder: GPUCommandEncoder,
+  pipeline: GPURenderPipeline,
+  bindGroup: GPUBindGroup,
+  context: GPUCanvasContext,
+  entities: Entity[]
+) => {
+  const textureView: GPUTextureView = context.getCurrentTexture().createView();
+  const renderPass = commandEncoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: textureView,
+        loadOp: "load",
+        storeOp: "store",
+      },
+    ],
+  });
+  renderPass.setPipeline(pipeline);
+  renderPass.setBindGroup(0, bindGroup);
+  renderPass.draw(3, 1, 0, 0);
   entities.forEach((entity) => {
     entity.render(device, renderPass, time);
   });
@@ -349,6 +411,55 @@ const createRenderPipeline = (
 
   return device.createRenderPipeline({
     label: "my screen shader pipeline",
+    layout: layout,
+    vertex: {
+      module: device.createShaderModule({ code: shader }),
+      entryPoint: "vert_main",
+    },
+    fragment: {
+      module: device.createShaderModule({ code: shader }),
+      entryPoint: "frag_main",
+      targets: [{ format: presentationFormat }],
+    },
+    primitive: {
+      topology: "triangle-list",
+      cullMode: "none", // No face culling
+    },
+  });
+};
+
+const createRenderPointsBindGroupLayout = (
+  device: GPUDevice
+): GPUBindGroupLayout => {
+  return device.createBindGroupLayout({
+    label: "my render points bind group layout",
+    entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} }],
+  });
+};
+
+const createRenderPointsBindGroup = (
+  layout: GPUBindGroupLayout,
+  device: GPUDevice,
+  points: GPUBuffer
+): GPUBindGroup => {
+  return device.createBindGroup({
+    layout: layout,
+    entries: [{ binding: 0, resource: { buffer: points } }],
+  });
+};
+
+const createRenderPointsPipeline = (
+  shader: string,
+  device: GPUDevice,
+  presentationFormat: GPUTextureFormat,
+  bindGroupLayout: GPUBindGroupLayout
+): GPURenderPipeline => {
+  const layout = device.createPipelineLayout({
+    bindGroupLayouts: [bindGroupLayout],
+  });
+
+  return device.createRenderPipeline({
+    label: "my render points pipeline",
     layout: layout,
     vertex: {
       module: device.createShaderModule({ code: shader }),
