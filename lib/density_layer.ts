@@ -70,12 +70,12 @@ export class DensityLayer extends Entity {
   };
 
   updatePointsPositions = () => {
-    this.points.forEach((point, i) => {
-      const multiplier = 0.01;
-      point[0] = point[0] += Math.random() * multiplier - multiplier / 2;
-      point[1] = point[1] += Math.random() * multiplier - multiplier / 2;
-    });
-    this.updateFlatPoints();
+    // this.points.forEach((point, i) => {
+    //   const multiplier = 0.01;
+    //   point[0] = point[0] += Math.random() * multiplier - multiplier / 2;
+    //   point[1] = point[1] += Math.random() * multiplier - multiplier / 2;
+    // });
+    // this.updateFlatPoints();
   };
 }
 
