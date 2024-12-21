@@ -2,7 +2,6 @@
 
 struct VertexOutput {
     @builtin(position) Position: vec4<f32>,
-    @location(0) TexCoord: vec2<f32>,
 }
 
 @vertex
@@ -13,19 +12,13 @@ fn vert_main(@builtin(vertex_index) VertexIndex: u32) -> VertexOutput {
         vec2<f32>(-0.5, -0.5),
     );
 
-    var texCoords = array<vec2<f32>, 3>(
-        vec2<f32>(0.5, 0.0),
-        vec2<f32>(0.5, 0.5),
-        vec2<f32>(0.0, 0.5),
-    );
 
     var output: VertexOutput;
     output.Position = vec4<f32>(positions[VertexIndex], 0.0, 1.0);
-    output.TexCoord = texCoords[VertexIndex];
     return output;
 }
 
 @fragment
-fn frag_main(@location(0) TexCoord: vec2<f32>) -> @location(0) vec4<f32> {
-    return vec4<f32>(1, 0, 0, 1);
+fn frag_main() -> @location(0) vec4<f32> {
+    return vec4<f32>(1, 1, 0, 1);
 }
