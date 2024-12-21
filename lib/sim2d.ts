@@ -191,6 +191,9 @@ export class Sim2d {
   };
 }
 
+// note that entities are only for the render pass / pipeline
+// compute and render-points don't use them
+// TODO structure this better
 const render = (
   time: number,
   device: GPUDevice,
@@ -220,13 +223,10 @@ const render = (
     entities
   );
   renderPointsPass(
-    time,
-    device,
     commandEncoder,
     renderPointsPipeline,
     renderPointsBindGroup,
-    context,
-    entities
+    context
   );
 
   const commandBuffer = commandEncoder.finish();
@@ -286,13 +286,10 @@ const renderPass = (
 };
 
 const renderPointsPass = (
-  time: number,
-  device: GPUDevice,
   commandEncoder: GPUCommandEncoder,
   pipeline: GPURenderPipeline,
   bindGroup: GPUBindGroup,
-  context: GPUCanvasContext,
-  entities: Entity[]
+  context: GPUCanvasContext
 ) => {
   const textureView: GPUTextureView = context.getCurrentTexture().createView();
   const renderPass = commandEncoder.beginRenderPass({
@@ -306,10 +303,7 @@ const renderPointsPass = (
   });
   renderPass.setPipeline(pipeline);
   renderPass.setBindGroup(0, bindGroup);
-  renderPass.draw(3, 1, 0, 0);
-  entities.forEach((entity) => {
-    entity.render(device, renderPass, time);
-  });
+  renderPass.draw(3, 300);
   renderPass.end();
 };
 
