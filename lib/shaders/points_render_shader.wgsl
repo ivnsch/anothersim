@@ -22,9 +22,9 @@ fn vert_main(
     let point = points[InstanceIndex];
 
     var positions = array<vec2<f32>, 3>(
-        vec2<f32>(point.x, point.y + sh), // top
-        vec2<f32>(point.x - sh, point.y - sh), // bottom left
-        vec2<f32>(point.x + sh, point.y - sh), // bottom right
+        vec2<f32>(point.x, -point.y + sh), // top
+        vec2<f32>(point.x - sh, -point.y - sh), // bottom left
+        vec2<f32>(point.x + sh, -point.y - sh), // bottom right
     );
 
     var output: VertexOutput;
