@@ -33,8 +33,8 @@ fn to_world_coords(screen_size: vec2<i32>, screen_pos: vec2<i32>) -> vec2<f32> {
 }
 
 fn calc_density(position: vec4<f32>, sample_points: array<vec4<f32>, 300>) -> f32 {
-    let radius = 0.04;
-    let mass = 1.0;
+    let radius = 0.1;
+    let mass = 4.;
 
     var total_density: f32 = 0.0;
 
