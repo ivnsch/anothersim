@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix";
+import { vec3, vec4 } from "gl-matrix";
 import { Axis } from "./axis";
 import { AxisLines } from "./axis_lines";
 import { Camera } from "./camera";
@@ -11,6 +11,7 @@ import { ParsedObjFile } from "./obj_parser";
 import { Projection } from "./projection";
 import my_compute_shader from "./shaders/compute.wgsl";
 import my_screen_shader from "./shaders/vertex_frag.wgsl";
+import { DensityLayer } from "./density_layer";
 
 export class Sim2d {
   adapter: GPUAdapter | null = null;
@@ -33,6 +34,8 @@ export class Sim2d {
 
   computeBindGroup: GPUBindGroup | null = null;
   renderBindGroup: GPUBindGroup | null = null;
+
+  densityLayer: DensityLayer | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.presentationFormat = "bgra8unorm";
@@ -67,7 +70,20 @@ export class Sim2d {
     const sampler = createSampler(device);
     this.sampler = sampler;
 
-    this.entities = [];
+    const points = [];
+    for (let index = 0; index < DensityLayer.POINTS_COUNT; index++) {
+      const point = vec4.fromValues(
+        Math.random() * CANVAS_WIDTH,
+        Math.random() * CANVAS_HEIGHT,
+        0,
+        0
+      );
+      points.push(point);
+    }
+    const densityLayer = new DensityLayer(device, points);
+    this.densityLayer = densityLayer;
+
+    this.entities = [densityLayer];
 
     this.context.configure({
       device: device,
@@ -96,7 +112,8 @@ export class Sim2d {
       device,
       this.colorBuffer,
       camera,
-      projection
+      projection,
+      densityLayer
     );
     this.computePipeline = createComputePipeline(
       my_compute_shader,
@@ -277,6 +294,11 @@ const createComputeBindGroupLayout = (
         visibility: GPUShaderStage.COMPUTE,
         buffer: {},
       },
+      {
+        binding: 3,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: {},
+      },
     ],
   });
 };
@@ -394,7 +416,8 @@ const createComputeBindGroup = (
   device: GPUDevice,
   colorBuffer: ColorBuffer,
   camera: Camera,
-  projection: Projection
+  projection: Projection,
+  densityLayer: DensityLayer
 ): GPUBindGroup => {
   return device.createBindGroup({
     layout: layout,
@@ -413,6 +436,12 @@ const createComputeBindGroup = (
         binding: 2,
         resource: {
           buffer: camera.buffer,
+        },
+      },
+      {
+        binding: 3,
+        resource: {
+          buffer: densityLayer.pointsBuffer,
         },
       },
     ],
