@@ -37,7 +37,6 @@ export class DensityLayer extends Entity {
 
   updateFlatPoints = () => {
     const pointSize = 4; // vec4
-    const screenSize = vec2.fromValues(CANVAS_WIDTH, CANVAS_HEIGHT);
     this.points.forEach((point, i) => {
       this.pointsFlat.set(point, i * pointSize);
     });
@@ -70,12 +69,14 @@ export class DensityLayer extends Entity {
   };
 
   updatePointsPositions = () => {
+    const pointSize = 4; // vec4
     this.points.forEach((point, i) => {
       const multiplier = 0.01;
       point[0] = point[0] += Math.random() * multiplier - multiplier / 2;
       point[1] = point[1] += Math.random() * multiplier - multiplier / 2;
+      // this is the same as updateFlatPoints, but here to not iterate twice
+      this.pointsFlat.set(point, i * pointSize);
     });
-    this.updateFlatPoints();
   };
 }
 
