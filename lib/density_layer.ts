@@ -39,8 +39,6 @@ export class DensityLayer extends Entity {
     const pointSize = 4; // vec4
     const screenSize = vec2.fromValues(CANVAS_WIDTH, CANVAS_HEIGHT);
     this.points.forEach((point, i) => {
-      //   const worldCoords = toWorldCoords(screenSize, point);
-      //   this.pointsFlat.set(worldCoords, i * pointSize);
       this.pointsFlat.set(point, i * pointSize);
     });
   };
@@ -83,12 +81,8 @@ export class DensityLayer extends Entity {
 
 // as defined in the shader as well
 const toWorldCoords = (screen_size: vec2, screen_pos: vec4): vec4 => {
-  //   let offset_x = screen_pos[0] - screen_size[0] / 2;
-  //   let offset_y = screen_pos[1] - screen_size[1] / 2;
   let offset_x = screen_pos[0] - screen_size[0] / 2;
   let offset_y = screen_pos[1] - screen_size[1] / 2;
-  //   let offset_x = screen_pos[0] - screen_size[0];
-  //   let offset_y = screen_pos[1] - screen_size[1];
   let normalized_x = (offset_x / screen_size[0]) * 2;
   let normalized_y = (offset_y / screen_size[1]) * 2;
 
