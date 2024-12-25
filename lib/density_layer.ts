@@ -52,31 +52,12 @@ export class DensityLayer extends Entity {
     return device.createBuffer({
       label: label,
       size: bufferSize,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
   };
 
   render = (device: GPUDevice) => {
-    this.updatePointsPositions();
-
-    device.queue.writeBuffer(
-      this.pointsBuffer,
-      0,
-      this.pointsFlat.buffer,
-      this.pointsFlat.byteOffset,
-      this.pointsFlat.byteLength
-    );
-  };
-
-  updatePointsPositions = () => {
-    const pointSize = 4; // vec4
-    this.points.forEach((point, i) => {
-      const multiplier = 0.01;
-      point[0] = point[0] += Math.random() * multiplier - multiplier / 2;
-      point[1] = point[1] += Math.random() * multiplier - multiplier / 2;
-      // this is the same as updateFlatPoints, but here to not iterate twice
-      this.pointsFlat.set(point, i * pointSize);
-    });
+    // note that the point's positions (movement simulation) are updated in a compute shader
   };
 }
 

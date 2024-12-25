@@ -1,4 +1,4 @@
-@group(0) @binding(0) var<uniform> points: array<vec4<f32>, 300>;
+@group(0) @binding(0) var<storage, read> points: array<vec4<f32>, 300>;
 
 struct VertexOutput {
     @builtin(position) Position: vec4<f32>,

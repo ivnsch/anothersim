@@ -11,6 +11,7 @@ import { ObjFileEntity } from "./obj_file_entity";
 import { Projection } from "./projection";
 import my_compute_shader from "./shaders/compute.wgsl";
 import points_shader from "./shaders/points_render_shader.wgsl";
+import points_updater from "./shaders/points_updater.wgsl";
 import my_screen_shader from "./shaders/vertex_frag.wgsl";
 
 export class Sim2d {
@@ -20,6 +21,7 @@ export class Sim2d {
 
   presentationFormat: GPUTextureFormat;
 
+  updatePointsPipeline: GPUComputePipeline | null = null;
   renderPipeline: GPURenderPipeline | null = null;
   computePipeline: GPUComputePipeline | null = null;
   renderPointsPipeline: GPURenderPipeline | null = null;
@@ -34,11 +36,14 @@ export class Sim2d {
   colorBuffer: ColorBuffer | null = null;
   sampler: GPUSampler | null = null;
 
+  updatePointsBindGroup: GPUBindGroup | null = null;
   computeBindGroup: GPUBindGroup | null = null;
   renderBindGroup: GPUBindGroup | null = null;
   renderPointsBindGroup: GPUBindGroup | null = null;
 
   densityLayer: DensityLayer | null = null;
+
+  timeBuffer: GPUBuffer | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.presentationFormat = "bgra8unorm";
@@ -96,7 +101,12 @@ export class Sim2d {
 
     this.camera.buffer = createMatrixUniformBuffer(device);
 
-    const renderBindGroupLayout = createRenderBindGroupLayout(this.device);
+    this.timeBuffer = device.createBuffer({
+      size: 4, // 4 bytes for a single float
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
+    const renderBindGroupLayout = createRenderBindGroupLayout(device);
     this.renderBindGroup = createRenderBindGroup(
       renderBindGroupLayout,
       device,
@@ -108,6 +118,19 @@ export class Sim2d {
       device,
       this.presentationFormat,
       renderBindGroupLayout
+    );
+
+    const updatePointsBindGroupLayout =
+      createUpdatePointsBindGroupLayout(device);
+    this.updatePointsBindGroup = createUpdatePointsBindGroup(
+      updatePointsBindGroupLayout,
+      device,
+      densityLayer,
+      this.timeBuffer
+    );
+    this.updatePointsPipeline = createPointsUpdaterComputePipeline(
+      device,
+      updatePointsBindGroupLayout
     );
 
     const computeBindGroupLayout = createComputeBindGroupLayout(device);
@@ -146,6 +169,8 @@ export class Sim2d {
       !(
         this.device &&
         this.context &&
+        this.updatePointsPipeline &&
+        this.updatePointsBindGroup &&
         this.computePipeline &&
         this.computeBindGroup &&
         this.renderPipeline &&
@@ -154,7 +179,8 @@ export class Sim2d {
         this.renderPointsBindGroup &&
         this.projection &&
         this.camera &&
-        this.densityLayer
+        this.densityLayer &&
+        this.timeBuffer
       )
     ) {
       console.log("missing deps, can't render");
@@ -165,6 +191,8 @@ export class Sim2d {
       time,
       this.device,
       this.context,
+      this.updatePointsPipeline,
+      this.updatePointsBindGroup,
       this.computePipeline,
       this.computeBindGroup,
       this.renderPipeline,
@@ -174,7 +202,8 @@ export class Sim2d {
       this.entities,
       this.projection,
       this.camera,
-      this.densityLayer
+      this.densityLayer,
+      this.timeBuffer
     );
   };
 
@@ -200,6 +229,8 @@ const render = (
   time: number,
   device: GPUDevice,
   context: GPUCanvasContext,
+  updatePointsPipeline: GPUComputePipeline,
+  updatePointsBindGroup: GPUBindGroup,
   computePipeline: GPUComputePipeline,
   computeBindGroup: GPUBindGroup,
   renderPipeline: GPURenderPipeline,
@@ -209,12 +240,14 @@ const render = (
   entities: Entity[],
   projection: Projection,
   camera: Camera,
-  densityLayer: DensityLayer
+  densityLayer: DensityLayer,
+  timeBuffer: GPUBuffer
 ) => {
   camera.update();
 
   const commandEncoder: GPUCommandEncoder = device.createCommandEncoder();
 
+  updatePointsPass(commandEncoder, updatePointsPipeline, updatePointsBindGroup);
   computePass(commandEncoder, computePipeline, computeBindGroup);
   renderPass(
     time,
@@ -243,6 +276,24 @@ const render = (
     projection.matrix as Float32Array
   );
   device.queue.writeBuffer(camera.buffer, 0, camera.matrix() as Float32Array);
+  device.queue.writeBuffer(
+    timeBuffer,
+    0,
+    new Float32Array([performance.now()])
+  );
+};
+
+const updatePointsPass = (
+  commandEncoder: GPUCommandEncoder,
+  updatePointsPipeline: GPUComputePipeline,
+  updatePointsBindGroup: GPUBindGroup
+) => {
+  const pointsCount = DensityLayer.POINTS_COUNT;
+  const computePass = commandEncoder.beginComputePass();
+  computePass.setPipeline(updatePointsPipeline);
+  computePass.setBindGroup(0, updatePointsBindGroup);
+  computePass.dispatchWorkgroups(Math.ceil(pointsCount / 64));
+  computePass.end();
 };
 
 const computePass = (
@@ -340,6 +391,26 @@ const createRenderBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout => {
   });
 };
 
+const createUpdatePointsBindGroupLayout = (
+  device: GPUDevice
+): GPUBindGroupLayout => {
+  return device.createBindGroupLayout({
+    label: "my compute bind group layout",
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: {},
+      },
+    ],
+  });
+};
+
 const createComputeBindGroupLayout = (
   device: GPUDevice
 ): GPUBindGroupLayout => {
@@ -368,7 +439,7 @@ const createComputeBindGroupLayout = (
       {
         binding: 3,
         visibility: GPUShaderStage.COMPUTE,
-        buffer: {},
+        buffer: { type: "read-only-storage" },
       },
     ],
   });
@@ -408,6 +479,26 @@ const createComputePipeline = (
   });
 };
 
+const createPointsUpdaterComputePipeline = (
+  device: GPUDevice,
+  bindGroupLayout: GPUBindGroupLayout
+): GPUComputePipeline => {
+  const layout = device.createPipelineLayout({
+    bindGroupLayouts: [bindGroupLayout],
+  });
+
+  return device.createComputePipeline({
+    layout: layout,
+
+    compute: {
+      module: device.createShaderModule({
+        code: points_updater,
+      }),
+      entryPoint: "update",
+    },
+  });
+};
+
 const createRenderPipeline = (
   shader: string,
   device: GPUDevice,
@@ -442,7 +533,13 @@ const createRenderPointsBindGroupLayout = (
 ): GPUBindGroupLayout => {
   return device.createBindGroupLayout({
     label: "my render points bind group layout",
-    entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} }],
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "read-only-storage" },
+      },
+    ],
   });
 };
 
@@ -562,6 +659,31 @@ const createComputeBindGroup = (
         binding: 3,
         resource: {
           buffer: densityLayer.pointsBuffer,
+        },
+      },
+    ],
+  });
+};
+
+const createUpdatePointsBindGroup = (
+  layout: GPUBindGroupLayout,
+  device: GPUDevice,
+  densityLayer: DensityLayer,
+  timeBuffer: GPUBuffer
+): GPUBindGroup => {
+  return device.createBindGroup({
+    layout: layout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: densityLayer.pointsBuffer,
+        },
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: timeBuffer,
         },
       },
     ],
